@@ -72,10 +72,10 @@ ZL_HB = zetas.tree(C,leaf_list,zeta.HB,pval,alpha)
 
 
 #iter_pointeur = 0    
-Vstar_HB=rep(0,n)
+Vstar_HB=rep(0,m)
 
 
-for (i in 1:n){
+for (i in 1:m){
   S=line_sorted_by_pValue[1:i]
   Vstar_HB[i]<-V.star(S,C,ZL_HB,leaf_list)
   # iter_pointeur=iter_pointeur+1
@@ -88,15 +88,20 @@ ZL_multiple = zeta.multiple(C,leaf_list,zeta.DKWM,zeta.HB,pval,0.05)
 
 
 iter_pointeur = 0    
-Vstar_mlt=rep(0,n)
+Vstar_mlt=rep(0,m)
 
 
-for (i in 1:n){
+for (i in 1:m){
   S=line_sorted_by_pValue[1:i]
   Vstar_mlt[i]<-V.star(S,C,ZL_multiple,leaf_list)
   iter_pointeur=iter_pointeur+1
   print(iter_pointeur)
 }
+
+plot(1:m-Vstar_mlt,
+     type='l',col='seagreen',lwd=3,
+     main='Vstar with multiple zeta',
+     xlab='pval[1:n]',ylab='Vstar')
 
 
 # Simes -------------------------------------------------------------------------------
@@ -126,4 +131,4 @@ lines(1:m-Vsimes,
 legend(x="topright", legend=c("Oracle","k-Vstar with zeta.DKWM","k-Vstar with zeta.HB","k-Vsimes"), col=c("cadetblue",'chocolate',"chocolate4","darkorchid"), lty=c(1,1,1,1))
 
 
-save(TP,Vstar_DKWM,Vstar_HB,Vsimes,file='Borne.RData')
+save(TP,Vstar_DKWM,Vstar_HB,Vstar_mlt,Vsimes,file='Borne.RData')

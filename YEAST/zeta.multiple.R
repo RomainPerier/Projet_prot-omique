@@ -1,4 +1,4 @@
-function (C,leaf_list,method_node,method_leaf,pvalues,alpha){
+zeta.multiple <- function (C,leaf_list,method_node,method_leaf,pvalues,alpha){
   n_leaf = length(leaf_list) # = C[[length(C)]]
   H = length(C)
   K=0
