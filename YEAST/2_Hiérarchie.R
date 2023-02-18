@@ -1,41 +1,36 @@
 library(doBy)
+library(cgwtools)
 library(stringr)
 
 ## Les fichiers de données -------------------------------------------------------------
 
-load("split_data.RData")   #Les peptides et les protéines 
-load("res_ordered.RData")  #Toutes les données mais tri
+load("save/data.RData")
 
 
 ## Création des feuilles au bon format--------------------------------------------------
 # leaf_list = les petides de chaques protéines = aux data (faut récupérer leur ordre....)
 # leaf_list=L1,L2,L3,.........
-#  Chaque feuille L correspond aux bornes des lignes qu'elle contient 
-n=dim(res_ordered)[1]
+# tailles des feuilles = nombre de peptides de chaque protéines 
+# nbr de feuilles = nbr de protéines 
+# taille_leaf_cum[i]=dernière ligne de la ie protéine 
 
-n_leaf=length(split_data)    #nombre de feuilles = nombres de protéines 
+m=nrow(res_ordered)
+n_leaf=length(split_data)
 
-taille_leaf=rep(0,n_leaf)    #tailles des feuilles = nbr de peptides de chaque protéines 
+
+taille_leaf=rep(0,n_leaf) 
 for (i in 1:n_leaf){
-  taille_leaf[i]<-dim(split_data[[i]])[1]
+  taille_leaf[i]<-nrow(split_data[[i]])
 }
+taille_leaf_cum=cumsum(taille_leaf) 
 
 
-# On veut créer une liste qui indique la première dernière ligne de chaque prot : 
-taille_leaf_cum=cumsum(taille_leaf) #tailles cumulées => retrouver les bonnes lignes de chaque peptides  
-
-
-#taille_leaf_cum[i]=dernière ligne de la ie protéine 
-
-#maintenant, on va créer la list des feuilles 
-
-leaf_list=list(1:(taille_leaf_cum[1])) #première feuille initialiser 
-
+leaf_list=list(1:(taille_leaf_cum[1]))
 for (i in 2:n_leaf){
   j=i-1
   leaf_list=append(leaf_list,list((taille_leaf_cum[j]+1):(taille_leaf_cum[i])))
 }
-
+rm(taille_leaf,taille_leaf_cum,i,j)
 
 ## Création de C -----------------------------------------------------------------------
 # C a trois niveaux 
@@ -46,27 +41,30 @@ for (i in 2:n_leaf){
 
 
 
-aux=!str_detect(names(split_data),"ups")   #on repère les protéines de levure
-n_levure=length(aux[aux])    #nombre levure = nombre de protéines de levure 
-n_ups=length(aux[!aux])    #      ups = prot humaines
-n_species_cum=c(n_levure,n_levure+n_ups)   #cumulée pour retrouver les bonnes lignes de chaques espèces 
+aux=!str_detect(names(split_data),"ups")
+n_levure=length(aux[aux])    
+n_ups=length(aux[!aux])    
+n_species_cum=c(n_levure,n_levure+n_ups)
+rm(aux) 
 
-rm(aux) #adios amigos 
-
-C3=list(c(1,1))   #A AMELIORER (voir pour créer C3 d'un coup ?????) u osef 
-
+C3=list(c(1,1))   
 for (i in 2:n_leaf){
   C3<-append(C3,list(c(i,i)))
 }
 
-
+# C1 <- list(c(1,n_leaf))
+# C2 <-list(c(1,n_levure) , c(n_levure+1,n_leaf))
 C=list(list(c(1,n_leaf)),list(c(1,n_levure),c(n_levure+1,n_leaf)),C3)    
-#list(c(1,n_leaf)) -> C1
-#list(c(1,n_levure) , c(n_levure+1,n_leaf))-> C2
-
 rm(C3)
 
 final_tree=list(leaf_list,C)
+rm(leaf_list,C,m,n_levure,n_species_cum,n_ups,n_leaf,i)
+resave(final_tree,file="save/data.RData")
 
-save(final_tree,file="final_tree.RData")
+## Useful object --------------------------------------------------------------
 
+pval = res_ordered[,'Pvalue']
+line_sorted_by_pval = order(pval)
+pval_sorted = sort(pval)
+proteom = cbind(proteom,pval)
+resave(proteom,pval,line_sorted_by_pval,pval_sorted,file='save/data.RData')

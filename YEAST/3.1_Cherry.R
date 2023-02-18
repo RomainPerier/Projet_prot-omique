@@ -30,7 +30,7 @@ curveSimes(res_simes)
 
 
 # Curve Fisher
-
+## pick Fisher à voir pour comparer
 
 curveFisher(res_ordered[,'Pvalue'])
 # sauvegarder dans Yeast car long à générer 

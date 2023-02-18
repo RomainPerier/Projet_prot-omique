@@ -1,25 +1,19 @@
-#Il s’agit d’une expérience similaire que précédemment, sauf qu’on a utilisé un fond constant de 800ng protéines de levure au lieu des 400ng de protéines d’arabidopsis.
-#Il y a 6 conditions: 0,5fmol, 1fmol, 2,5fmol, 5fmol, 10fmol et 25fmol de protéines UPS. 
-#Pour distinguer les protéines UPS des protéines de levure cette fois: si le nom de la protéine termine par « ups » c’est que c’est une protéine UPS, sinon, c’est que c’est une protéine de levure. 
+#Il y a 6 conditions: 0,5fmol, 1fmol, 2,5fmol, 5fmol, 10fmol et 25fmol de protéines UPS
+#Pour distinguer les protéines UPS des protéines de levure cette fois: si le nom de la protéine termine par « ups » c’est que c’est une protéine UPS, sinon, c’est que c’est une protéine de levure.
 #Je vous propose à nouveau de construire deux groupes en agrégeant les 3 plus petites conditions d’une part et les 3 plus grandes d’autre part. 
 
-
-# Code identique que le précédent car tableau de données à la même forme 
-
-
-#On importe les données que l'on souhaite pré-traiter
-bdd=read.csv("peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
+bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
 
 ## Filtration -------------------------------------------------------
 #On retire des données toutes les lignes possédant 
 #un échantillon complet manquant :
 
-Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),#On compte le nombre 
-                           rowSums(bdd[,(6:8)]>0),     #de valeurs mesurée 
-                           rowSums(bdd[,(9:11)]>0),    #pour chaque set :
-                           rowSums(bdd[,(12:14)]>0),   #S'il manque un sets
-                           rowSums(bdd[,(15:17)]>0),   #complet, une de ces
-                           rowSums(bdd[,(18:20)]>0))   #valeurs est à 0.
+Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),     # On compte le nombre 
+                           rowSums(bdd[,(6:8)]>0),     # de valeurs mesurées 
+                           rowSums(bdd[,(9:11)]>0),    # pour chaque set :
+                           rowSums(bdd[,(12:14)]>0),   # S'il manque un sets
+                           rowSums(bdd[,(15:17)]>0),   # complet, une de ces
+                           rowSums(bdd[,(18:20)]>0))   # valeurs est à 0.
 
 Count_Intensity=apply(Count_Intensity_Sets,1,min)
 
@@ -127,7 +121,12 @@ rm(bddaux,i,j,ind)
 ## Prétraitement terminé ---------------------------------------------
 
 
-proteom_treated=bdd
+proteom=bdd
 rm(bdd)
+# -> to load in Prostar : 
+write.table(proteom, "Fichier/proteom_treated.txt",row.names=FALSE,quote=FALSE,sep="\t")
 
-write.table(proteom_treated, "proteom_treated.txt",row.names=FALSE,quote=FALSE,sep="\t")
+# -> to sort later : 
+row.names(proteom) <- 1:nrow(proteom)
+save(proteom,file='save/data.RData')
+

@@ -6,6 +6,7 @@ library(ggplot2)
 jointFWERControl
 
 bidule <- sanssouci:::jointFWERControl(pval,refFamily='kFWER',0.05) #?????????????
-
+# jointFWERControl remplacer par CalibrateJER0 voir github 
+# voir les objets sanssouci avec fit etc pour faire la lambda calibration # avec class comme en python mais version R, les méthodes c'est avec $
 
 # res -> tableau de p-value 

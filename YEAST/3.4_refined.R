@@ -1,38 +1,52 @@
-#Enfin, si les protéines sont assez petites en terme de nombre de peptides, on peut peut-être enfin essayer ma méthode de raffinement des zeta HB (zetas.tree.refined).
-
-
 library(sanssouci)
-library(cherry)
 library(doBy)
 
 load('data.RData')
 
 
-######################### LIGNE 28 ###############################################"
-
-
-
-# Vstar.no.id ----------------------------------------------------------------
-# V.star(S =,C = ,ZL = ,leaf_list = )
-# zetas.tree(C = ,leaf_list = ,method = ,pvalues = ,alpha = )
+## But -------------------------------------------------------------------------
+# On veut tester la fonction de raffinement zetas.tree.refined, comparer les
+# V.star obtenu avec zeta_HB et zeta_refined 
+#
+# Attention : 
+# || Error in nb.elements(C) : could not find function "nb.elements"
+#  >>>> nv.elements indisponible dans sanssouci
+#  >>>> mais sanssouci:::nb.elements marche 
+#
+#
+#
+#
+## Vstar -----------------------------------------------------------------------
 pval = res_ordered[,'Pvalue']
+m=length(pval)
 
 C=final_tree[[2]]
 leaf_list=final_tree[[1]]
 alpha=0.05
 
-ZL_refined=zetas.tree.refined(C,leaf_list,zeta.DKWM,pval,alpha)
-
+ZL_refined=zetas.tree.refined(C,leaf_list,zeta.HB,pval,alpha)
+ZL_HB = zetas.tree(C,leaf_list,zeta.HB,pval,alpha)
 
 iter_pointeur = 0
-aux = 1869   # m//10
-Vstar_nrefined=rep(0,aux)
+# On va tester sur les 300 dernières 
+Vstar_refined=rep(0,300)
+Vstar_aux=rep(0,300)
+Vsimes_aux=rep(0,300)
+
+thr=alpha/m*(1:m)
 
 
-for (i in 1:aux){
+for (i in 1301:1600){
   S=line_sorted_by_pValue[1:i*10]
-  Vstar_refined[i]<-V.star(S,C,ZL_DKWM,leaf_list)
+  Vstar_refined[i]<-V.star(S,C,ZL_refined,leaf_list)
+  
+  Vstar_aux[i]<-V.star(S,C,ZL_HB,leaf_list)
+  
+  Vsimes_aux[i]<-sanssouci:::curveMaxFP(pval[S],thr[S]) 
   iter_pointeur=iter_pointeur+1
+  
   print(iter_pointeur)
 }
-save(Vstar_refined,file='Test_refined.RData')
+
+
+save(Vstar_aux, Vsimes_aux, Vstar_refined,file='Test_refined.RData')

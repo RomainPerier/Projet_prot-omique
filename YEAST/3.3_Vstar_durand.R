@@ -25,14 +25,20 @@ aux = 1869   # m//10
 Vstar_noid=rep(0,aux)
 Vstar_allnoid=rep(0,aux)
 
+Vstar_noid=rep(0,8)
+Vstar_aux=rep(0,8)
 
-for (i in 1:aux){
+
+for (i in (1:80)){
   S=line_sorted_by_pValue[1:i*10]
   Vstar_noid[i]<-V.star.no.id(S,C,ZL_DKWM,leaf_list)
-  Vstar_allnoid[i]<-V.star.all.leaves.no.id(S,C,ZL_DKWM,leaf_list)
+  #Vstar_allnoid[i]<-V.star.all.leaves.no.id(S,C,ZL_DKWM,leaf_list)
+  Vstar_aux[i]<-V.star(S,C,ZL_DKWM,leaf_list)
   iter_pointeur=iter_pointeur+1
   print(iter_pointeur)
 }
+Vstar_noid-Vstar_aux
+
 save(Vstar_noid,Vstar_allnoid,file='Test_durand.RData')
 
 comp_tp=numeric()
@@ -61,6 +67,7 @@ legend(x="bottomright", legend=c("Oracle","k-Vstar","k-Vstar.id","k-Vstar.a.no")
 
 
 
+### fait n'imp
 
 
 
@@ -95,8 +102,7 @@ legend(x="bottomright", legend=c("Oracle","k-Vstar","k-Vstar.id","k-Vstar.a.no")
 
 
 
-
-
+## VOIR avec devtools et remotes pour télécharger une branche avec ref de la branche, ou l'url de la branche 
 
 
 
