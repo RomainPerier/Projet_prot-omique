@@ -56,11 +56,12 @@ Vsimes=sanssouci:::curveMaxFP(pval,thr)
 df_bornes <- cbind(df_bornes,Vsimes)
 
 ## Plot  -----------------------------------------------------------------------
-df_plot =  cbind(df_bornes[,1:2],TP_Vsimes=df_bornes[,'Index']-df_bornes[,'Vsimes'])
-df_plot <- cbind(df_plot,TP_Vstar_DKWM=df_bornes[,'Index']-df_bornes[,'Vstar_DKWM'])
-df_plot <- cbind(df_plot,TP_Vstar_HB=df_bornes[,'Index']-df_bornes[,'Vstar_HB'])
-df_plot <- cbind(df_plot,TP_Vstar_mlt=df_bornes[,'Index']-df_bornes[,'Vstar_mlt'])
-df_plot <- cbind(df_plot,TP_Vstar_refined=df_bornes[,'Index']-df_bornes[,'Vstar_refined'])
+df_plot =  cbind(df_bornes[,1:2],TP_Vsimes=df_bornes[,'Index']-df_bornes[,'Vsimes']
+                 ,TP_Vstar_DKWM=df_bornes[,'Index']-df_bornes[,'Vstar_DKWM']
+                 ,TP_Vstar_HB=df_bornes[,'Index']-df_bornes[,'Vstar_HB']
+                 ,TP_Vstar_mlt=df_bornes[,'Index']-df_bornes[,'Vstar_mlt']
+                 ,TP_Vstar_refined=df_bornes[,'Index']-df_bornes[,'Vstar_refined'])
+
 df_plot = melt(df_plot, id.vars = "Index")
 
 resave(df_plot,file='save/data.RData')
@@ -69,7 +70,3 @@ ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
   ylim(c(0,200))+
   ggtitle('Lower Bound on True Positive in Yeast Data')
-
-# JER : voir dans quel Rk JER violé dans notre régionnement 
-# => trouver quelles zeta_k foire le JER !
-# voir ce qu'il y a a conservé, qu'est ce qui fonctionne fonctionne pas 
