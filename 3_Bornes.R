@@ -36,7 +36,7 @@ Vstar_refined=rep(0,m%/%pas)
 
 
 for (i in 4056:m%/%pas){
-  S=line_sorted_by_pval[1:i*pas]
+  S=line_sorted_by_pval[1:(i*pas)]
   Vstar_DKWM[i]<-V.star(S,C,ZL_DKWM,leaf_list)
   Vstar_HB[i]<-V.star(S,C,ZL_HB,leaf_list)
   Vstar_mlt[i]<-V.star(S,C,ZL_multiple,leaf_list)
