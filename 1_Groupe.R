@@ -1,7 +1,7 @@
 library(sanssouci)
 library(doBy)
 library(stringr)
-library(cgwtools)
+library(cgwtools) #for resave
 
 ## Importation des données et Trie ---------------------------------------------
 load('save/data.RData')

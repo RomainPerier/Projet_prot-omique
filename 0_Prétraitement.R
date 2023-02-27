@@ -1,6 +1,5 @@
 #Il y a 6 conditions: 0,5fmol, 1fmol, 2,5fmol, 5fmol, 10fmol et 25fmol de protéines UPS
-#Pour distinguer les protéines UPS des protéines de levure cette fois: si le nom de la protéine termine par « ups » c’est que c’est une protéine UPS, sinon, c’est que c’est une protéine de levure.
-#Je vous propose à nouveau de construire deux groupes en agrégeant les 3 plus petites conditions d’une part et les 3 plus grandes d’autre part. 
+# deux groupes en agrégeant les 3 plus petites conditions d’une part et les 3 plus grandes d’autre part. 
 
 bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
 

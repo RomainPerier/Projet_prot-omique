@@ -1,5 +1,5 @@
 library(doBy)
-library(cgwtools)
+library(cgwtools) 
 library(stringr)
 
 ## Les fichiers de données -------------------------------------------------------------
