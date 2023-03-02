@@ -1,10 +1,11 @@
 library(doBy)
-library(cgwtools) 
 library(stringr)
 
 ## Les fichiers de données -------------------------------------------------------------
 
-load("save/data.RData")
+load("save/proteom.RData")
+load("save/res_ordered.RData")
+load("save/split_data.RData")
 
 
 ## Création des feuilles au bon format--------------------------------------------------
@@ -59,7 +60,7 @@ rm(C3)
 
 final_tree=list(leaf_list,C)
 rm(leaf_list,C,m,n_levure,n_species_cum,n_ups,n_leaf,i)
-resave(final_tree,file="save/data.RData")
+save(final_tree,file="save/final_tree.RData")
 
 ## Useful object --------------------------------------------------------------
 
@@ -67,4 +68,5 @@ pval = res_ordered[,'Pvalue']
 line_sorted_by_pval = order(pval)
 pval_sorted = sort(pval)
 proteom = cbind(proteom,pval)
-resave(proteom,pval,line_sorted_by_pval,pval_sorted,file='save/data.RData')
+save(proteom,file="save/proteom.RData")
+save(pval,line_sorted_by_pval,pval_sorted,file='save/pval.RData')

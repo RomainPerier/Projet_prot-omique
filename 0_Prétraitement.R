@@ -127,5 +127,5 @@ write.table(proteom, "Fichier/proteom_treated.txt",row.names=FALSE,quote=FALSE,s
 
 # -> to sort later : 
 row.names(proteom) <- 1:nrow(proteom)
-save(proteom,file='save/data.RData')
+save(proteom,file='save/proteom.RData')
 

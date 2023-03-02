@@ -1,10 +1,9 @@
 library(sanssouci)
 library(doBy)
 library(stringr)
-library(cgwtools) #for resave
 
 ## Importation des données et Trie ---------------------------------------------
-load('save/data.RData')
+load('save/proteom.RData')
 res=read.csv("Fichier/proteom_treated_test.txt",header=TRUE,sep="\t")[,c('id','Pvalue','Leading_razor_protein')]
 
 Species=!str_detect(res[,"Leading_razor_protein"],"ups")
@@ -18,8 +17,8 @@ rm(Species)
 res_ordered=orderBy(~ Species + Leading_razor_protein,res)
 proteom <- proteom[as.numeric(row.names(res_ordered)),]
 
-
-save(res_ordered,proteom,file='save/data.RData')
+save(proteom,file='save/proteom.RData')
+save(res_ordered,file='save/res_ordered.RData')
 rm(res)
 ## Groupement par Protéines ------------------------------------------------------------
 
@@ -27,6 +26,6 @@ rm(res)
 split_data=splitBy(formula = ~ Species + Leading_razor_protein,res_ordered)[]
 # 2418 protéines, 42 humaines - 2376 levure
 
-resave(split_data, file = "save/data.RData")
+save(split_data, file = "save/split_data.RData")
 
 

@@ -2,7 +2,8 @@ library(sanssouci)
 library(ggplot2)
 library(cgwtools)
 library(doBy)
-load('save/data.RData')
+load('save/final_tree.RData')
+load('save/pval.RData')
 # JER : voir dans quel Rk JER violé dans notre régionnement 
 # => trouver quelles zeta_k foire le JER !
 # voir ce qu'il y a a conservé, qu'est ce qui fonctionne fonctionne pas 
@@ -11,6 +12,8 @@ load('save/data.RData')
 
 ## Contrôle du JER sur les feuilles  -------------------------------------------
 alpha = 0.05
+C=final_tree[[2]]
+leaf_list=final_tree[[1]]
 m = nrow(proteom)
 H = length(C)
 
@@ -41,4 +44,4 @@ prot_violated=split_data[line]
 len_prop_violated=unlist(lapply(splitBy(formula = ~ Leading_razor_protein,proteom[Rk_violated,]),function(x){dim(x[1])}))
 len_prot=unlist(lapply(prot_violated,function(x){dim(x[1])}))
 
-
+ZL_node=ZL_DKWM[[2]]

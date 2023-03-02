@@ -2,9 +2,12 @@ library(sanssouci)
 library(ggplot2)
 library(ggthemes)
 library(stringr)
-library(reshape2)
 library(cgwtools)
-load('save/data.RData')
+library(reshape2)
+load('save/proteom.RData')
+load('save/res_ordered.RData')
+load('save/final_tree.RData')
+load('save/pval.RData')
 #theme_set(theme_ben())
 
 m=length(pval)
@@ -47,7 +50,7 @@ for (i in 4056:m%/%pas){
 
 df_bornes <- cbind(df_bornes,Vstar_DKWM,Vstar_HB,Vstar_mlt,Vstar_refined)
 
-resave(df_bornes,file='save/data.RData')
+save(df_bornes,file='save/bornes.RData')
 
 ## Vsimes ----------------------------------------------------------------------
 thr=alpha/m*(1:m)
@@ -64,7 +67,7 @@ df_plot =  cbind(df_bornes[,1:2],TP_Vsimes=df_bornes[,'Index']-df_bornes[,'Vsime
 
 df_plot = melt(df_plot, id.vars = "Index")
 
-resave(df_plot,file='save/data.RData')
+resave(df_plot,file='save/bornes.RData')
 
 ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  

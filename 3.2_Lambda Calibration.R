@@ -2,11 +2,12 @@ library(sanssouci)
 library(ggplot2)
 library(stringr)
 library(cgwtools)
-load('save/data.RData')
+load('save/bornes.RData')
+load('save/final_tree.RData')
 
 ## Création de l'objet SansSouci -----------------------------------------------
 
-Y <- as.matrix(proteom[,3:20]) #epr_all -> gene ligne - sample colonne donc idem 
+Y <- as.matrix(proteom[,4:21]) #epr_all -> gene ligne - sample colonne donc idem 
 
 groups <- c(rep(0,9),rep(1,9))
 
@@ -14,7 +15,7 @@ truth <- as.numeric(str_detect(proteom[,'Leading_razor_protein'],"ups"))
 
 SS_obj <- SansSouci(Y,groups,truth)
 
-resave(SS_obj,file='save/data.RData')
+resave(SS_obj,file='save/bornes.RData')
 
 ## Objet SansSouci  -----------------------------------------------------------
 
@@ -40,7 +41,7 @@ cat("pValues : ",summary(pval_ss))
 thr_ss = thresholds(cal)
 cat("thresholds : ",summary(thr_ss))
 
-resave(cal,cal_Oracle,file='save/data.RData')
+resave(cal,cal_Oracle,file='save/bornes.RData')
 
 ## Pvaleur by sanssouci vs DAPAR -----------------------------------------------
 
@@ -57,7 +58,7 @@ ggplot(df_pval,aes(x=pValeur,fill=Méthode))+
 ## Lambda Calibration ----------------------------------------------------------
 # cal0 / cal_Oracle / cal
 
-cal0 = fit(SS_obj,alpha=0.05,B=0,vamily='Simes')
+cal0 = fit(SS_obj,alpha=0.05,B=0,family='Simes')
 
 confs <- list(Simes = predict(cal0, all = TRUE),
               "Simes+calibration" = predict(cal, all = TRUE),
@@ -74,9 +75,10 @@ df_bornes <- cbind(df_bornes, Vsimes_cal = (1:m-data.frame(aux[aux$stat=='TP',]$
 resave(df_bornes,file="save/data.RData")
 df_plot <-  rbind(df_plot, data.frame(Index=1:m,variable='Vsimes_Cal',value=aux[aux$stat=='TP',]$bound))
 
-resave(df_plot,file='save/data.RData')
+resave(df_plot,file='save/bornes.RData')
 
 ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
   ylim(c(0,200))+
+  xlim(c(0,3000))+
   ggtitle('Lower Bound on True Positive in Yeast Data')
