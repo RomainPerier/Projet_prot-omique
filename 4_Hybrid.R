@@ -1,7 +1,10 @@
 library(sanssouci)
 library(cgwtools)
 library(ggplot2)
-load('save/data.RData')
+load('save/bornes.RData')
+load('save/res_ordered.RData')
+load('save/proteom.RData')
+load('save/pval.RData')
 #  hybride Vdkwm et Vhb 
 # V*DKHM(zeta.dkwm(alpha)), et  V*HB(zeta.HB(alpha))
 # plusieurs manières d'hybdrider 
@@ -16,7 +19,7 @@ load('save/data.RData')
 
 list_gamma = 0.1*(1:9)
 alpha = 0.05
-
+hg
 ## Première hybridation --------------------------------------------------------
 # 1. Vhybri = min (VDKWM(S),VHB(S))   -> mais perds garantis stats sauf si avec poids 
 #     i.e. Vhybrid = min (VDKWM(zeta(gamma alpha)),VHB(zeta(1-gammaalpha))) 
@@ -27,7 +30,7 @@ df_hybrid=data.frame()
 
 for (gamma in list_gamma){
   # Calcul tout les K
-  K = 250
+  K = 100 
   max=m%/%K
   V_hybrid = rep(0,max)
   TP_V_hybrid = rep(0,max)
@@ -58,7 +61,7 @@ df_hybrid2=data.frame()
 for (gamma in list_gamma){
   df_aux=data.frame()
   # Calcul tout les K
-  K = 250
+  K = 100 
   max=m%/%K
   V_hybrid = rep(0,max)
   TP_V_hybrid = rep(0,max)
@@ -79,17 +82,18 @@ for (gamma in list_gamma){
   df_hybrid2 <- rbind(df_hybrid2,df_aux)
 }
 
-
+save(df_hybrid,df_hybrid2,file='save/hybrid.RData')
 ## Plot ------------------------------------------------------------------------
 
-ggplot(df_hybrid,aes(x=Index,y=TP_V_hybrid,color=Gamma))+
+ggplot(df_hybrid2,aes(x=Index,y=TP_V_hybrid,color=Gamma))+
   geom_line(lwd=1) +  
   ylim(c(0,200))+
   ggtitle('Hybrid - Yeast Data')
 
 ggplot(df_hybrid,aes(x=Index,y=TP_V_hybrid,color=Gamma))+
   geom_line(lwd=1) +  
-  ylim(c(0,200))+
+  ylim(c(150,175))+
+  xlim(c(0,140))
   ggtitle('Hybrid - Yeast Data')
 
 df <- df_hybrid
