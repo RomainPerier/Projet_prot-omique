@@ -1,25 +1,22 @@
-#On importe les données que l'on souhaite pré-traiter
-bdd=read.csv("peptides_ARATHUPS_MBR.txt",header=TRUE,sep="",
+bdd=read.csv("ARATH/peptides_ARATHUPS_MBR.txt",header=TRUE,sep="",
              blank.lines.skip=TRUE)
 
 ## Filtration -------------------------------------------------------
-#On retire des données toutes les lignes possédant 
-#un échantillon complet manquant :
 
-Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),#On compte le nombre 
-                      rowSums(bdd[,(6:8)]>0),     #de valeurs mesurée 
-                      rowSums(bdd[,(9:11)]>0),    #pour chaque set :
-                      rowSums(bdd[,(12:14)]>0),   #S'il manque un sets
-                      rowSums(bdd[,(15:17)]>0),   #complet, une de ces
-                      rowSums(bdd[,(18:20)]>0))   #valeurs est à 0.
+Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),     # On compte le nombre 
+                           rowSums(bdd[,(6:8)]>0),     # de valeurs mesurées 
+                           rowSums(bdd[,(9:11)]>0),    # pour chaque set :
+                           rowSums(bdd[,(12:14)]>0),   # S'il manque un sets
+                           rowSums(bdd[,(15:17)]>0),   # complet, une de ces
+                           rowSums(bdd[,(18:20)]>0))   # valeurs est à 0.
 
 Count_Intensity=apply(Count_Intensity_Sets,1,min)
 
-bdd_no_na=bdd[Count_Intensity!=0,]
+bdd=bdd[Count_Intensity!=0,]
 
 rm(Count_Intensity,Count_Intensity_Sets)
 
-## Imputatuin -------------------------------------------------------
+## Imputation -------------------------------------------------------
 #Pour chaque set d'échantillons, on remplace la valeur manquante par la
 #moyenne de celles mesurées.
 
@@ -29,13 +26,13 @@ rm(Count_Intensity,Count_Intensity_Sets)
 i=3
 j=i+2
 
-bddaux=bdd_no_na[,(i:j)]
+bddaux=bdd[,(i:j)]
 bddaux[bddaux==0]<-NA
 
 ind=which(is.na(bddaux),arr.ind=TRUE)
 bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
-bdd_no_na[,(i:j)]<-bddaux
+bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 ###################################################
@@ -44,13 +41,13 @@ rm(bddaux,i,j,ind)
 i=6
 j=i+2
 
-bddaux=bdd_no_na[,(i:j)]
+bddaux=bdd[,(i:j)]
 bddaux[bddaux==0]<-NA
 
 ind=which(is.na(bddaux),arr.ind=TRUE)
 bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
-bdd_no_na[,(i:j)]<-bddaux
+bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 ###################################################
@@ -59,13 +56,13 @@ rm(bddaux,i,j,ind)
 i=9
 j=i+2
 
-bddaux=bdd_no_na[,(i:j)]
+bddaux=bdd[,(i:j)]
 bddaux[bddaux==0]<-NA
 
 ind=which(is.na(bddaux),arr.ind=TRUE)
 bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
-bdd_no_na[,(i:j)]<-bddaux
+bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 ###################################################
@@ -74,13 +71,13 @@ rm(bddaux,i,j,ind)
 i=12
 j=i+2
 
-bddaux=bdd_no_na[,(i:j)]
+bddaux=bdd[,(i:j)]
 bddaux[bddaux==0]<-NA
 
 ind=which(is.na(bddaux),arr.ind=TRUE)
 bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
-bdd_no_na[,(i:j)]<-bddaux
+bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 ###################################################
@@ -90,13 +87,13 @@ rm(bddaux,i,j,ind)
 i=15
 j=i+2
 
-bddaux=bdd_no_na[,(i:j)]
+bddaux=bdd[,(i:j)]
 bddaux[bddaux==0]<-NA
 
 ind=which(is.na(bddaux),arr.ind=TRUE)
 bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
-bdd_no_na[,(i:j)]<-bddaux
+bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 ###################################################
@@ -106,21 +103,26 @@ rm(bddaux,i,j,ind)
 i=18
 j=i+2
 
-bddaux=bdd_no_na[,(i:j)]
+bddaux=bdd[,(i:j)]
 bddaux[bddaux==0]<-NA
 
 ind=which(is.na(bddaux),arr.ind=TRUE)
 bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
-bdd_no_na[,(i:j)]<-bddaux
+bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 #############################
-
 ## Prétraitement terminé ---------------------------------------------
 
 
-bdd_fin=bdd_no_na
-rm(bdd_no_na)
+proteom=bdd
+rm(bdd)
+# -> to load in Prostar : 
+write.table(proteom, "ARATH/proteom_treated_arath.txt",row.names=FALSE,quote=FALSE,sep="\t")
 
-write.table(bdd_fin, "proteom_treated.txt",row.names=FALSE,quote=FALSE,sep="\t")
+# -> to sort later : 
+row.names(proteom) <- 1:nrow(proteom)
+save(proteom,file='ARATH/save/proteom.RData')
+
+
