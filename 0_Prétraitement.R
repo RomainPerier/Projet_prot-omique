@@ -129,3 +129,4 @@ write.table(proteom, "Fichier/proteom_treated.txt",row.names=FALSE,quote=FALSE,s
 row.names(proteom) <- 1:nrow(proteom)
 save(proteom,file='save/proteom.RData')
 
+
