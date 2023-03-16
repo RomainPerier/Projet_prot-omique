@@ -10,16 +10,15 @@ Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),     # On compte le nombre
                            rowSums(bdd[,(12:14)]>0),   # S'il manque un sets
                            rowSums(bdd[,(15:17)]>0),   # complet, une de ces
                            rowSums(bdd[,(18:20)]>0))   # valeurs est à 0.
-# On retire les lignes ayant plus un set complet manquant 
 n=nrow(bdd)
-keep=rep(TRUE,n)
+keep = rep(TRUE,n)
+seuil = 0.5
 for (i in 1:n){
-  if(any(Count_Intensity_Sets[i,]==0)){keep[i]=FALSE}
+  if(sum(bdd[i,3:20]==0)>seuil*18 | any(Count_Intensity_Sets[i,]==0) ){keep[i]=FALSE}
 }
 
-bdd=bdd[keep,]
 
-rm(Count_Intensity_Sets)
+bdd=bdd[keep,]
 
 ## Imputation -------------------------------------------------------
 #Pour chaque set d'échantillons, on remplace la valeur manquante par la
@@ -121,12 +120,11 @@ rm(bddaux,i,j,ind)
 
 
 proteom=bdd
-rm(bdd)
 # -> to load in Prostar : 
-write.table(proteom, "ARATH/proteom_treated_arath.txt",row.names=FALSE,quote=FALSE,sep="\t")
+write.table(proteom, "ARATH/proteom_treated_arath2.txt",row.names=FALSE,quote=FALSE,sep="\t")
 
 # -> to sort later : 
 row.names(proteom) <- 1:nrow(proteom)
-save(proteom,file='ARATH/save/proteom.RData')
+save(proteom,file='ARATH/save/proteom2.RData')
 
 
