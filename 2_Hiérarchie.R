@@ -9,11 +9,6 @@ load("save/split_data.RData")
 
 
 ## Création des feuilles au bon format--------------------------------------------------
-# leaf_list = les petides de chaques protéines = aux data (faut récupérer leur ordre....)
-# leaf_list=L1,L2,L3,.........
-# tailles des feuilles = nombre de peptides de chaque protéines 
-# nbr de feuilles = nbr de protéines 
-# taille_leaf_cum[i]=dernière ligne de la ie protéine 
 
 m=nrow(res_ordered)
 n_leaf=length(split_data)
@@ -34,13 +29,6 @@ for (i in 2:n_leaf){
 rm(taille_leaf,taille_leaf_cum,i,j)
 
 ## Création de C -----------------------------------------------------------------------
-# C a trois niveaux 
-#                 TOUT                      C1
-#      levure             ups               C2 
-# prot prot prot      prot prot prot prot   C3
-# On a n_leaf protéines, on repère celle associé à levure ou non 
-
-
 
 aux=!str_detect(names(split_data),"ups")
 n_levure=length(aux[aux])    
@@ -53,20 +41,10 @@ for (i in 2:n_leaf){
   C3<-append(C3,list(c(i,i)))
 }
 
-# C1 <- list(c(1,n_leaf))
-# C2 <-list(c(1,n_levure) , c(n_levure+1,n_leaf))
+
 C=list(list(c(1,n_leaf)),list(c(1,n_levure),c(n_levure+1,n_leaf)),C3)    
 rm(C3)
 
 final_tree=list(leaf_list,C)
 rm(leaf_list,C,m,n_levure,n_species_cum,n_ups,n_leaf,i)
 save(final_tree,file="save/final_tree.RData")
-
-## Useful object --------------------------------------------------------------
-
-pval = res_ordered[,'Pvalue']
-line_sorted_by_pval = order(pval)
-pval_sorted = sort(pval)
-proteom = cbind(proteom,pval)
-save(proteom,file="save/proteom.RData")
-save(pval,line_sorted_by_pval,pval_sorted,file='save/pval.RData')
