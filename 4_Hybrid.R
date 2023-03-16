@@ -1,28 +1,18 @@
 library(sanssouci)
 library(cgwtools)
 library(ggplot2)
-load('save/bornes.RData')
+load('save/df_plot.RData')
 load('save/res_ordered.RData')
 load('save/proteom.RData')
 load('save/pval.RData')
-#  hybride Vdkwm et Vhb 
-# V*DKHM(zeta.dkwm(alpha)), et  V*HB(zeta.HB(alpha))
-# plusieurs manières d'hybdrider 
-#
-#  varier gqamma aussi 
-#
-#  en théorie gamma petit n'empêche pas la perforcmance de v* 
-#
-# papier dbnr gamma=0.2
+load('save/final_tree.RData')
 
 ## Hyper paramètres ------------------------------------------------------------
 
-list_gamma = 0.1*(1:9)
+list_gamma = (1:9)*0.1
 alpha = 0.05
-hg
+
 ## Première hybridation --------------------------------------------------------
-# 1. Vhybri = min (VDKWM(S),VHB(S))   -> mais perds garantis stats sauf si avec poids 
-#     i.e. Vhybrid = min (VDKWM(zeta(gamma alpha)),VHB(zeta(1-gammaalpha))) 
 m=nrow(proteom)
 C=final_tree[[2]]
 leaf_list=final_tree[[1]]
@@ -30,7 +20,7 @@ df_hybrid=data.frame()
 
 for (gamma in list_gamma){
   # Calcul tout les K
-  K = 100 
+  K = 50
   max=m%/%K
   V_hybrid = rep(0,max)
   TP_V_hybrid = rep(0,max)
@@ -41,17 +31,12 @@ for (gamma in list_gamma){
     V_hybrid[i] <- min(V.star(S,C,ZL_1,leaf_list),V.star(S,C,ZL_2,leaf_list))
     TP_V_hybrid[i] <- i*K - V_hybrid[i]
   }
-  df_aux <- data.frame(Index=(1:max),Gamma=as.character(gamma),V_hybrid=V_hybrid,TP_V_hybrid=TP_V_hybrid)
+  df_aux <- data.frame(Index=(1:max)*K,Gamma=as.character(gamma),V_hybrid=V_hybrid,TP_V_hybrid=TP_V_hybrid)
   df_hybrid <- rbind(df_hybrid,df_aux)
 }
 
 
 ## Deuxième hybridation --------------------------------------------------------
-# 2. faire un min avec les zeta ? 
-#   car même R_k ! 
-#     Vhybdri' = V*(min(zeta.DKWM(gamma alpha),zeta.BH(1- gamma alpha))) tjrs inférieur à la premièreb manièer -> garantis stats 
-#    Egalité stricte ??? -> si oui mieux ! 
-#    boucle for qui parcourt les zeta et 
 
 m=nrow(proteom)
 C=final_tree[[2]]
@@ -61,7 +46,7 @@ df_hybrid2=data.frame()
 for (gamma in list_gamma){
   df_aux=data.frame()
   # Calcul tout les K
-  K = 100 
+  K = 50
   max=m%/%K
   V_hybrid = rep(0,max)
   TP_V_hybrid = rep(0,max)
@@ -78,35 +63,42 @@ for (gamma in list_gamma){
     TP_V_hybrid[i] <- i*K - auxV
     V_hybrid[i] <- auxV
   }
-  df_aux <- data.frame(Index=(1:max),Gamma=as.character(gamma),V_hybrid=V_hybrid,TP_V_hybrid=TP_V_hybrid)
+  df_aux <- data.frame(Index=(1:max)*K,Gamma=as.character(gamma),V_hybrid=V_hybrid,TP_V_hybrid=TP_V_hybrid)
   df_hybrid2 <- rbind(df_hybrid2,df_aux)
 }
 
 save(df_hybrid,df_hybrid2,file='save/hybrid.RData')
 ## Plot ------------------------------------------------------------------------
 
+load('save/hybrid.RData')
+
 ggplot(df_hybrid2,aes(x=Index,y=TP_V_hybrid,color=Gamma))+
-  geom_line(lwd=1) +  
-  ylim(c(0,200))+
-  ggtitle('Hybrid - Yeast Data')
+  geom_line(lwd=1) +
+  ylim(c(100,190)) +
+  xlim(c(1000,15000))+
+  ggtitle('Hybrid 2 - Yeast Data')
 
 ggplot(df_hybrid,aes(x=Index,y=TP_V_hybrid,color=Gamma))+
   geom_line(lwd=1) +  
-  ylim(c(150,175))+
-  xlim(c(0,140))
-  ggtitle('Hybrid - Yeast Data')
+  ylim(c(100,190)) +
+  xlim(c(1000,15000))+
+  ggtitle('Hybrid 1 - Yeast Data')
 
 df <- df_hybrid
 df[,'TP_V_hybrid'] <- df_hybrid2[,'TP_V_hybrid'] - df_hybrid[,'TP_V_hybrid']
 
 ggplot(df,aes(x=Index,y=TP_V_hybrid,color=Gamma))+
   geom_line(lwd=1) +  
-  ylim(c(-2,2))+
-  ggtitle('Diff Hybrid - Yeast Data')
+  ylim(c(-1,2))+
+  ylab('')+
+  ggtitle('Différence entre les deux bornes hybrides')
+
 
 # la 2e mieux dans certain cas 
 
-
-
-
-
+ggplot(df,aes(x=Index,y=TP_V_hybrid))+
+  geom_line(lwd=1,color='mediumblue')+
+  ylab('')+
+  xlim(c(10000,15000))+
+  ggtitle('Comparaison des deux bornes hybrides')+
+  facet_grid(Gamma~ .)

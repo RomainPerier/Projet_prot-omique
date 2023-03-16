@@ -2,14 +2,14 @@ library(sanssouci)
 library(cherry)
 library(doBy)
 library(ggplot2)
-load('save/bornes.RData')
-load('save/resordered.RData')
+load('save/df_plot.RData')
+load('save/res_ordered.RData')
 load('save/final_tree.RData')
 load('save/pval.RData')
 
 ## True Positive ---------------------------------------------------------------
 
-TP=df_bornes[,'TP']
+TP=df_plot[df_plot$variable=='TP','value']
 
 ## Homel Fast ------------------------------------------------------------------
 
