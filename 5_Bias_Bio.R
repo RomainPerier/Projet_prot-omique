@@ -64,8 +64,15 @@ for (k in listk){
   V2 = V.star(Sk2,C = final_tree[[2]], leaf_list = final_tree[[1]], ZL)
   V3 = V.star(Sk3,C = final_tree[[2]], leaf_list = final_tree[[1]], ZL)
   
+  
+  Dlength=rep(c(length(Sk1),length(Sk2),length(Sk3)),2)
+  Dlength[Dlength==0]<- 1 # FDP = V(S)/min(|S|,1)
+  FDPk = c(V1,V2,V3,FP1,FP2,FP3)/Dlength
+  
+  
   df_res=rbind(df_res,data.frame(k=k,
                Méthode=c('BH','BF','HB','BH_oracle','BF_oracle','HB_oracle'),
                Cardinal=rep(c(length(Sk1),length(Sk2),length(Sk3)),2),
-               Vstar=c(V1,V2,V3,FP1,FP2,FP3)))
+               Vstar=c(V1,V2,V3,FP1,FP2,FP3),
+               FDP = FDPk))
 }

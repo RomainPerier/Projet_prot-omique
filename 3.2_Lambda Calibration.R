@@ -51,8 +51,8 @@ df_plot <-  rbind(df_plot, data.frame(Index=1:m,variable='Vsimes_Cal',value=aux[
 
 resave(df_plot,file='save/df_plot.RData')
 
-ggplot(df_plot,aes(x=Index,y=value,color=variable))+
+ggplot(df_plot[df_plot$variable!='TP_Vstar_refined',],aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
-  ylim(c(0,200))+
+  ylim(c(0,300))+
   ggtitle('Lower Bound on True Positive in Yeast Data')
 
