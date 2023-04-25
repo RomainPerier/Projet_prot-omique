@@ -1,0 +1,20 @@
+Re, 
+
+Voici le lien de l’article auquel j’ai pensé:
+https://journals.asm.org/doi/full/10.1128/Spectrum.00692-21
+Je vous mets en pièce jointe le jeu de données associé. 
+
+Je ne connais pas spécialement la problématique biologique qu’il y a derrière. Il s’agit d’étudier une bactérie qui semble entre autres être capable de désulfuriser les combustibles fossiles. 
+J’ai choisi cet article parce que :
+- il utilise ProStaR, donc les outils que vous connaissez déjà, pour l’analyse protéomique différentielle
+- les données sont publiées et publiques
+- je connais certains auteurs (la partie protéomique du papier a été réalisée dans mon ancien labo de thèse), donc si besoin de les contacter, c’est plus simple. 
+
+Dans l’article, il y a aussi tout une partie en métabolique qui vous concerne moins voire pas, à part éventuellement pour des considérations biologiques. 
+
+Je n’ai pas encore essayé de traiter les données avec la version Shiny de SansSouci, donc je ne sais pas ce que ça peut donner. 
+
+Je sais que vous familiariser avec l’article, l’expérience et les données risque de vous prendre du temps. Si jamais vous n’avez pas le temps, ce n’est pas grave, votre rapport et la soutenance (ainsi que vos autres cours et examens) restent vos priorités (sans parler de votre sommeil ;-) ). 
+
+A bientôt, 
+Marie
