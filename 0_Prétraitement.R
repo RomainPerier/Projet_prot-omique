@@ -4,6 +4,14 @@
 bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
 
 ## Filtration -------------------------------------------------------
+
+## code pour récupérer les infos sur les colonnes de manière auto
+vectcond=sapply(colnames(bdd), function(i) strsplit(i,"[_]")[[1]][3])
+vectcond=="0.5fmol"
+vectcond=="10fmol"
+# etc... 
+
+
 #On retire des données toutes les lignes possédant 
 #un échantillon complet manquant :
 
