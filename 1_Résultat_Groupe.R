@@ -7,6 +7,8 @@ library(ggplot2)
 load('save/proteom.RData')
 res=read.csv("Fichier/proteom_test.txt",header=TRUE,sep="\t")[,c('id','Pvalue','Leading_razor_protein')]
 
+hist(res$Pvalue)
+
 Species=!str_detect(res[,"Leading_razor_protein"],"ups")
 Species[Species==TRUE]<-"levure"
 Species[Species==FALSE]<-"ups"
