@@ -37,3 +37,15 @@ pval = res_ordered[,'Pvalue']
 line_sorted_by_pval = order(pval)
 pval_sorted = sort(pval)
 save(pval,line_sorted_by_pval,pval_sorted,file='save/pval.RData')
+
+## Tri des données selon les p-valeurs -------
+
+res_ordered_pvalue <- orderBy(~ Pvalue,res_ordered)
+save(res_ordered_pvalue,file="save/res_ordered_pvalue.RData")
+
+## Tri de split_data par plus petite p-valeur----
+min_pval<-c()
+for (prot in split_data){min_pval <- rbind(min_pval,min(prot[,"Pvalue"]))}
+min_pval<-order(min_pval)
+split_data_pvalue <- split_data[min_pval]
+save(split_data_pvalue, file = "save/split_data_pvalue.RData")
