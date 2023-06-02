@@ -2,8 +2,8 @@ library(stringr)
 library(ggplot2)
 load('save/pval.RData')
 load('save/res_ordered.RData')
-source("00_Theme.R")
-theme_set(theme_ben())
+##source("00_Theme.R")
+##theme_set(theme_ben())
 
 ## Data_frame ------------------------------------------------------
 m=nrow(res_ordered)
@@ -21,3 +21,4 @@ ggplot(df,aes(x=Pvalue,color=Condition))+
   ggtitle('Fonction de réparition empirique des p-valeurs selon la condition')+
   geom_segment(aes(x = 0, y = 0, xend = 1, yend = 1),show.legend = NA,lwd=1,linetype='dashed',color='black')
 
+rm(list = ls())

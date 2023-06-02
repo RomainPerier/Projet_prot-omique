@@ -1,8 +1,8 @@
 library(ggplot2)
 library(stringr)
 library(philentropy)
-source("00_Theme.R")
-theme_set(theme_ben())
+##source("00_Theme.R")
+##theme_set(theme_ben())
 
 ## Méthode ---------------------------------------------------------------------
 
@@ -47,3 +47,5 @@ ggplot(data[data$Méthode==keep,],aes(x=Value,fill=Méthode))+
   geom_density(alpha=0.2,lwd=0.5)+
   xlim(c(0,30000000))+
   facet_grid(Condition ~ .)
+
+rm(list = ls())

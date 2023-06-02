@@ -7,7 +7,7 @@ load('save/proteom.RData')
 load('save/final_tree.RData')
 load('save/pval.RData')
 
-alpha = 0.05
+alpha = 0.01
 
 m = nrow(proteom)
 n = 18 #ncol
@@ -21,14 +21,14 @@ truth <- as.numeric(str_detect(proteom[,'Leading_razor_protein'],"ups"))
 
 SS_obj <- SansSouci(Y,groups,truth)
 
-save(SS_obj,file='ARATH/save/sanssouci_obj.RData')
+##save(SS_obj,file='ARATH/save/sanssouci_obj.RData')
 
 
 ## Calibration -----------------------------------------------------------------
 
-cal <- fit(SS_obj,alpha=0.05,B=1000,family='Simes')
-cal_Oracle <- fit(SS_obj,0.05,family="Oracle")
-cal0 <- fit(SS_obj,alpha=0.05,B=0,family='Simes') #sans calibration
+cal <- fit(SS_obj,alpha=alpha,B=1000,family='Simes')
+cal_Oracle <- fit(SS_obj,alpha,family="Oracle")
+cal0 <- fit(SS_obj,alpha=alpha,B=0,family='Simes') #sans calibration
 
 #pval_ss = pValues(cal)
 #thr_ss = thresholds(cal)

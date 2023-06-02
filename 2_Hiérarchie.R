@@ -42,9 +42,19 @@ for (i in 2:n_leaf){
 }
 
 
-C=list(list(c(1,n_leaf)),list(c(1,n_levure),c(n_levure+1,n_leaf)),C3)    
-rm(C3)
-
+C=list(C3)  
 final_tree=list(leaf_list,C)
-rm(leaf_list,C,m,n_levure,n_species_cum,n_ups,n_leaf,i)
 save(final_tree,file="save/final_tree.RData")
+
+
+## Création de l'arbre amélioré regroupant tous les positifs -----
+final_tree_1 = list(leaf_list,list(list(c(n_levure+1,n_leaf)),C3))
+save(final_tree_1,file="save/final_tree_1.RData")
+
+## Création de l'arbre amélioré regroupant tous les positifs puis tous les peptides -----
+C=list(list(c(1,n_leaf)),list(c(n_levure+1,n_leaf)),C3)
+final_tree_2=list(leaf_list,C)
+save(final_tree_2,file="save/final_tree_2.RData")
+
+
+rm(list = ls())

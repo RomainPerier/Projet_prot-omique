@@ -1,9 +1,9 @@
 library(ggplot2)
 library(stringr)
-source("00_Theme.R")
+##source("00_Theme.R")
 source('Fonction/pretraitement.sets.R')
 source('Fonction/no.pretraitement.R')
-theme_set(theme_ben())
+##theme_set(theme_ben())
 
 bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
 
@@ -16,3 +16,4 @@ ggplot(data,aes(x=Value,fill=Méthode))+
   xlim(c(0,30000000))+
   facet_grid(Condition ~ .)
 
+rm(list = ls())

@@ -49,3 +49,6 @@ for (prot in split_data){min_pval <- rbind(min_pval,min(prot[,"Pvalue"]))}
 min_pval<-order(min_pval)
 split_data_pvalue <- split_data[min_pval]
 save(split_data_pvalue, file = "save/split_data_pvalue.RData")
+rm(prot)
+
+rm(list = ls())
