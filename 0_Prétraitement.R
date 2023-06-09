@@ -3,7 +3,7 @@
 
 bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
 
-
+library("sanssouci")
 ## Filtration -------------------------------------------------------
 
 
@@ -37,13 +37,22 @@ rm(Count_Intensity,Count_Intensity_Sets)
 
 ## Pas d'imputation
 
-proteom=bdd
-rm(bdd)
-# -> to load in Prostar : 
-write.table(proteom, "Fichier/proteom_treated.txt",row.names=FALSE,quote=FALSE,sep="\t")
+bdd <- cbind(bdd[,(1:2)],rowMeans(bdd[,set1]),rowMeans(bdd[,set2]),rowMeans(bdd[,set3]),rowMeans(bdd[,set4]),rowMeans(bdd[,set5]),rowMeans(bdd[,set6]))
 
-# -> to sort later : 
-row.names(proteom) <- 1:nrow(proteom)
-save(proteom,file='save/proteom.RData')
+# Calcul des p-valeurs
+
+categ <- rep(c(0,1), times = c(3,3))
+
+prot_matr <- data.matrix(bdd[,(3:8)])
+
+tests<- rowWelchTests(prot_matr, categ, alternative = "greater")
+
+Pvalue <- tests$p.value
+
+res <- cbind(proteom[,(1:2)],Pvalue)
+
+save(res,file="save/res_test.Rdata")
+
 
 rm(list = ls())
+

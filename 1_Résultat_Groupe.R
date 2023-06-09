@@ -5,8 +5,7 @@ library(ggplot2)
 
 ## Importation des données et Trie ---------------------------------------------
 load('save/proteom.RData')
-res=read.csv("Fichier/proteom_test.txt",header=TRUE,sep="\t")[,c('id','Pvalue','Leading_razor_protein')]
-
+load("save/res_test.Rdata")
 hist(res$Pvalue)
 
 Species=!str_detect(res[,"Leading_razor_protein"],"ups")

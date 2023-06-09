@@ -67,3 +67,16 @@ ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
   ylim(c(0,200))+
   ggtitle('Lower Bound on True Positive in Yeast Data')
+
+#Plot : 
+df_plot =  cbind(df[,1:2]
+                 ,TP_Vstar_DKWM=df[,'Index']-df[,'Vstar_DKWM'])
+
+df_plot = melt(df_plot, id.vars = "Index")
+
+
+ggplot(df_plot,aes(x=Index,y=value,color=variable))+
+  geom_line(lwd=1) +  
+  ylim(c(0,200))+
+  ggtitle('Lower Bound on True Positive in Yeast Data')
+
