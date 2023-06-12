@@ -15,6 +15,8 @@ theme_set(theme_ben())
 m=length(pval)
 df_bornes = data.frame(Index=1:m)
 
+plot(ecdf(pval))
+
 ## Bornes ----------------------------------------------------------------------
 
 C=final_tree[[2]]
@@ -60,10 +62,17 @@ df_plot =  cbind(df[,1:2]
 
 df_plot = melt(df_plot, id.vars = "Index")
 
-save(df_plot,file='save/df_plot.RData')
+save(df_plot,file='save/df_plot_ss.RData')
 
 
 ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
   ylim(c(0,200))+
+  ggtitle('Lower Bound on True Positive in Yeast Data')
+
+load("save/df_plot.Rdata")
+ggplot(df_plot,aes(x=Index,y=value,color=variable))+
+  geom_line(lwd=1) +  
+  xlim(c(0,1000))+
+  ylim(c(0,100))+
   ggtitle('Lower Bound on True Positive in Yeast Data')
