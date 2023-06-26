@@ -126,7 +126,8 @@ bddaux[ind] <- rowMeans(bddaux, na.rm=TRUE)[ind[,1]]
 
 bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
-
+proteom=bdd
+save(proteom,file='save/proteom.RData')
 #############################
 ## Prétraitement terminé ---------------------------------------------
 
@@ -138,6 +139,7 @@ bdd <- cbind(bdd[,(1:2)],
              rowMeans(cbind(bdd[,set4][1],bdd[,set5][1],bdd[,set6][1])),
              rowMeans(cbind(bdd[,set4][2],bdd[,set5][2],bdd[,set6][2])),
              rowMeans(cbind(bdd[,set4][3],bdd[,set5][3],bdd[,set6][3])))
+
 
 # Calcul des p-valeurs
 
@@ -155,3 +157,4 @@ save(res,file="save/res_test.Rdata")
 
 
 rm(list = ls())
+

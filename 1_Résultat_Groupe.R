@@ -5,8 +5,7 @@ library(ggplot2)
 
 ## Importation des données et Trie ---------------------------------------------
 load('save/proteom.RData')
-res=read.csv("Fichier/proteom_test.txt",header=TRUE,sep="\t")[,c('id','Pvalue','Leading_razor_protein')]
-
+load("save/res_test.Rdata")
 hist(res$Pvalue)
 
 Species=!str_detect(res[,"Leading_razor_protein"],"ups")
@@ -18,6 +17,12 @@ rm(Species)
 # 192 peptides de ups / 18 506 peptides de levure 
 
 res_ordered=orderBy(~ Species + Leading_razor_protein,res)
+proteom <- proteom[res_ordered$Pvalue >=	1e-06,] 
+##proteom <- proteom[res_ordered$Pvalue <=	0.9999974,] for os
+proteom <- proteom[!is.na(res_ordered$Pvalue),]
+res_ordered <- res_ordered[res_ordered$Pvalue >=	1e-06,] 
+## res_ordered <- res_ordered[res_ordered$Pvalue <=	0.9999974,] for os
+res_ordered <- res_ordered[ !is.na(res_ordered$Pvalue),]
 proteom <- proteom[as.numeric(row.names(res_ordered)),]
 
 save(proteom,file='save/proteom.RData')
@@ -49,3 +54,5 @@ for (prot in split_data){min_pval <- rbind(min_pval,min(prot[,"Pvalue"]))}
 min_pval<-order(min_pval)
 split_data_pvalue <- split_data[min_pval]
 save(split_data_pvalue, file = "save/split_data_pvalue.RData")
+
+rm(list = ls())

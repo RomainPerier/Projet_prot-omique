@@ -9,13 +9,9 @@ load('save/res_ordered.RData')
 load('save/final_tree.RData')
 load('save/pval.RData')
 
-source("00_Theme.R")
-theme_set(theme_ben())
 
 m=length(pval)
 df_bornes = data.frame(Index=1:m)
-
-plot(ecdf(pval))
 
 ## Bornes ----------------------------------------------------------------------
 
@@ -32,6 +28,7 @@ df_bornes <- cbind(df_bornes,TP)
 alpha=0.05
 K = 10 # Calculer tout les K lignes
 ZL_DKWM=zetas.tree(C,leaf_list,zeta.DKWM,pval,alpha) 
+
 ZL_HB = zetas.tree(C,leaf_list,zeta.HB,pval,alpha)
 source("Fonction/zetas.tree.refined.R")
 ZL_refined=zetas.tree.refined(C,leaf_list,zeta.DKWM,pval,alpha)
@@ -57,22 +54,20 @@ df <- cbind(df_bornes[1:(m%/%K)*K,],Vstar_DKWM,Vstar_HB,Vsimes,Vstar_refined)
 df_plot =  cbind(df[,1:2]
                  ,TP_Vsimes=df[,'Index']-df[,'Vsimes']
                  ,TP_Vstar_DKWM=df[,'Index']-df[,'Vstar_DKWM']
-                 ,TP_Vstar_HB=df[,'Index']-df[,'Vstar_HB']
-                  ,TP_Vstar_refined=df[,'Index']-df[,'Vstar_refined'])
+                 ,TP_Vstar_HB=df[,'Index']-df[,'Vstar_HB'])
 
 df_plot = melt(df_plot, id.vars = "Index")
 
-save(df_plot,file='save/df_plot_ss.RData')
+save(df_plot,file='save/df_plot_ss_os.RData')
 
 
 ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
   ylim(c(0,200))+
-  ggtitle('Lower Bound on True Positive in Yeast Data')
+  ggtitle('Lower Bound on True Positive')
 
-load("save/df_plot.Rdata")
 ggplot(df_plot,aes(x=Index,y=value,color=variable))+
   geom_line(lwd=1) +  
   xlim(c(0,1000))+
-  ylim(c(0,100))+
-  ggtitle('Lower Bound on True Positive in Yeast Data')
+  ylim(c(0,200))+
+  ggtitle('Lower Bound on True Positive')

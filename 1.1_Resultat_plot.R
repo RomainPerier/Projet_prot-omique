@@ -16,6 +16,7 @@ df <- df[line_sorted_by_pval,]
 ggplot(df,aes(x=Pvalue,color=Hypothesis))+
   stat_ecdf(geom='step',lwd=1)+
   xlab('')+ylab('')+
-  ggtitle("Cdf with respect to the hypothesis")+
+  ggtitle("Cdf under null/alternative hypothesis")+
   geom_segment(aes(x = 0, y = 0, xend = 1, yend = 1),show.legend = NA,lwd=1,linetype='dashed',color='black')
 
+rm(list = ls())
