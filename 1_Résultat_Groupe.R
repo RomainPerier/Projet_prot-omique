@@ -6,7 +6,6 @@ library(ggplot2)
 ## Importation des données et Trie ---------------------------------------------
 load('save/proteom.RData')
 load("save/res_test.Rdata")
-hist(res$Pvalue)
 
 Species=!str_detect(res[,"Leading_razor_protein"],"ups")
 Species[Species==TRUE]<-"levure"
@@ -48,3 +47,8 @@ for (prot in split_data){min_pval <- rbind(min_pval,min(prot[,"Pvalue"]))}
 min_pval<-order(min_pval)
 split_data_pvalue <- split_data[min_pval]
 save(split_data_pvalue, file = "save/split_data_pvalue.RData")
+
+CDF_ups <- ecdf(res_ordered[res_ordered$Species=="ups",] $Pvalue)
+CDF_levure <- ecdf(res_ordered[res_ordered$Species=="levure",] $Pvalue)
+plot(CDF_ups)
+plot(CDF_levure)

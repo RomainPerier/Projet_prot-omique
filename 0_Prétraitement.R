@@ -37,7 +37,13 @@ rm(Count_Intensity,Count_Intensity_Sets)
 
 ## Pas d'imputation
 
-bdd <- cbind(bdd[,(1:2)],rowMeans(bdd[,set1]),rowMeans(bdd[,set2]),rowMeans(bdd[,set3]),rowMeans(bdd[,set4]),rowMeans(bdd[,set5]),rowMeans(bdd[,set6]))
+bdd <- cbind(bdd[,(1:2)],
+             rowMeans(cbind(bdd[,set1][1],bdd[,set2][1],bdd[,set3][1])),
+             rowMeans(cbind(bdd[,set1][2],bdd[,set2][2],bdd[,set3][2])),
+             rowMeans(cbind(bdd[,set1][3],bdd[,set2][3],bdd[,set3][3])),
+             rowMeans(cbind(bdd[,set4][1],bdd[,set5][1],bdd[,set6][1])),
+             rowMeans(cbind(bdd[,set4][2],bdd[,set5][2],bdd[,set6][2])),
+             rowMeans(cbind(bdd[,set4][3],bdd[,set5][3],bdd[,set6][3])))
 
 # Calcul des p-valeurs
 
@@ -49,10 +55,9 @@ tests<- rowWelchTests(prot_matr, categ, alternative = "greater")
 
 Pvalue <- tests$p.value
 
-res <- cbind(proteom[,(1:2)],Pvalue)
+res <- cbind(bdd[,(1:2)],Pvalue)
 
 save(res,file="save/res_test.Rdata")
-
 
 rm(list = ls())
 
