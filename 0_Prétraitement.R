@@ -1,4 +1,7 @@
-#Il y a 6 conditions: 0,5fmol, 1fmol, 2,5fmol, 5fmol, 10fmol et 25fmol de protéines UPS
+library("DAPAR")
+library("Biobase")
+library("limma")
+ #Il y a 6 conditions: 0,5fmol, 1fmol, 2,5fmol, 5fmol, 10fmol et 25fmol de protéines UPS
 # deux groupes en agrégeant les 3 plus petites conditions d’une part et les 3 plus grandes d’autre part. 
 
 bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
@@ -26,8 +29,8 @@ Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),     # On compte le nombre
                            rowSums(bdd[,(18:20)]>0))   # valeurs est à 0.
 
 Count_Intensity=apply(Count_Intensity_Sets,1,min)
-
-bdd=bdd[Count_Intensity!=0,]
+Count_Intensity_bis=apply(Count_Intensity_Sets,1,max)
+bdd<-bdd[Count_Intensity!=0 & Count_Intensity_bis>1,]
 
 rm(Count_Intensity,Count_Intensity_Sets)
 
@@ -128,8 +131,20 @@ bdd[,(i:j)]<-bddaux
 rm(bddaux,i,j,ind)
 
 #############################
-## Prétraitement terminé ---------------------------------------------
+## Prétraitement terminé ------------------------------------------
 
+obj <- bdd
+qData <- Biobase::exprs(obj)
+sTab <- Biobase::pData(obj)
+limma <- limmaCompleteTest(qData, sTab, comp.type = "anova1way")
+
+bdd <- cbind(bdd[,(1:2)],
+             rowMeans(cbind(bdd[,set1][1],bdd[,set2][1],bdd[,set3][1])),
+             rowMeans(cbind(bdd[,set1][2],bdd[,set2][2],bdd[,set3][2])),
+             rowMeans(cbind(bdd[,set1][3],bdd[,set2][3],bdd[,set3][3])),
+             rowMeans(cbind(bdd[,set4][1],bdd[,set5][1],bdd[,set6][1])),
+             rowMeans(cbind(bdd[,set4][2],bdd[,set5][2],bdd[,set6][2])),
+             rowMeans(cbind(bdd[,set4][3],bdd[,set5][3],bdd[,set6][3])))
 
 proteom=bdd
 rm(bdd)
@@ -140,5 +155,8 @@ write.table(proteom, "Fichier/proteom_treated.txt",row.names=FALSE,quote=FALSE,s
 row.names(proteom) <- 1:nrow(proteom)
 save(proteom,file='save/proteom.RData')
 
-
-##ça push ou pas?----------
+data(Exp1_R25_pept, package="DAPARdata")
+obj <- Exp1_R25_pept
+qData <- Biobase::exprs(obj)
+sTab <- Biobase::pData(obj)
+limma <- limmaCompleteTest(qData, sTab, comp.type = "anova1way")
