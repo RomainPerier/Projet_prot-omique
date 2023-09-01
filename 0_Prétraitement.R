@@ -133,10 +133,9 @@ rm(bddaux,i,j,ind)
 #############################
 ## Prétraitement terminé ------------------------------------------
 
-obj <- bdd
-qData <- Biobase::exprs(obj)
-sTab <- Biobase::pData(obj)
-limma <- limmaCompleteTest(qData, sTab, comp.type = "anova1way")
+qData <- bdd
+s_Tab<-c()
+limma <- limmaCompleteTest(qData, comp.type = "anova1way")
 
 bdd <- cbind(bdd[,(1:2)],
              rowMeans(cbind(bdd[,set1][1],bdd[,set2][1],bdd[,set3][1])),
@@ -160,3 +159,5 @@ obj <- Exp1_R25_pept
 qData <- Biobase::exprs(obj)
 sTab <- Biobase::pData(obj)
 limma <- limmaCompleteTest(qData, sTab, comp.type = "anova1way")
+
+name_col <-c(colnames(bdd[set1]),colnames(bdd[set2]),colnames(bdd[set3]),colnames(bdd[set4]),colnames(bdd[set5]),colnames(bdd[set6]))
