@@ -21,12 +21,12 @@ set6 <- vectcond=="25fmol"
 #On retire des données toutes les lignes possédant 
 #un échantillon complet manquant :
 
-Count_Intensity_Sets=cbind(rowSums(bdd[,(3:5)]>0),     # On compte le nombre 
-                           rowSums(bdd[,(6:8)]>0),     # de valeurs mesurées 
-                           rowSums(bdd[,(9:11)]>0),    # pour chaque set :
-                           rowSums(bdd[,(12:14)]>0),   # S'il manque un sets
-                           rowSums(bdd[,(15:17)]>0),   # complet, une de ces
-                           rowSums(bdd[,(18:20)]>0))   # valeurs est à 0.
+Count_Intensity_Sets=cbind(rowSums(bdd[,set1]>0),     # On compte le nombre 
+                           rowSums(bdd[,set2]>0),     # de valeurs mesurées 
+                           rowSums(bdd[,set3]>0),    # pour chaque set :
+                           rowSums(bdd[,set4]>0),   # S'il manque un sets
+                           rowSums(bdd[,set5]>0),   # complet, une de ces
+                           rowSums(bdd[,set6]>0))   # valeurs est à 0.
 
 Count_Intensity=apply(Count_Intensity_Sets,1,min)
 Count_Intensity_bis=apply(Count_Intensity_Sets,1,max)

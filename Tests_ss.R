@@ -4,12 +4,28 @@ library(ggthemes)
 library(stringr)
 library(cgwtools)
 library(reshape2)
+library(DAPAR)
 load('save/proteom.RData')
 load('save/res_ordered.RData')
 load('save/final_tree.RData')
 load('save/pval.RData')
 
 ## Dev sanssouci ---- 
+zeta.HB.no.extension <- function(pval, lambda) {
+  m <- length(pval)
+  sorted.pval <- sort(pval)
+  
+  thresholds <- lambda / (m:1)
+  v <- sorted.pval - thresholds
+  indexes <- which(v > 0)
+  if (! length(indexes)) {
+    return(0)
+  }
+  else{
+    return(m - indexes[1] + 1)
+  }
+}
+
 forest.completion <- function(C, ZL, leaf_list) {
   H <- length(C)
   
@@ -224,6 +240,11 @@ curve.V.star.forest.fast <- function(perm, C, ZL, leaf_list, is.pruned = FALSE, 
 m=length(pval)
 df_bornes = data.frame(Index=1:m)
 
+## Prepare data for DAPAR -----------------------------
+
+get_sTab <- function(qData){
+  name_col <- colnames(qData)
+}
 
 ## Bornes ----------------------------------------------------------------------
 
@@ -241,7 +262,7 @@ alpha=0.05
 K = 10 # Calculer tout les K lignes
 ZL_DKWM=zetas.tree(C,leaf_list,zeta.DKWM,pval,alpha) 
 
-ZL_HB = zetas.tree(C,leaf_list,zeta.HB,pval,alpha)
+ZL_HB = zetas.tree(C,leaf_list,zeta.HB.no.extension,pval,alpha)
 source("Fonction/zetas.tree.refined.R")
 ZL_refined=zetas.tree.refined(C,leaf_list,zeta.DKWM,pval,alpha)
 
@@ -329,3 +350,23 @@ curve.boucle.DKWM <- function(mlim,pval_sorted,C,leaf_list) {
 t0 <- system.time()
 t1 <- system.time()
 tdif <- difftime(t0,t1)
+
+df_bornes = data.frame(Index=1:m)
+
+TP=cumsum(res_ordered[line_sorted_by_pval,]$Species=='ups')
+
+df_bornes <- cbind(df_bornes,TP)
+
+df <- cbind(df_bornes,Vstar_HB2)
+
+
+df_plot <- cbind(df[,1:2]
+                 ,TP_Vstar_HB=df[,'Index']-df[,'Vstar_HB2'])
+
+
+df_plot = melt(df_plot, id.vars = "Index")
+
+ggplot(df_plot,aes(x=Index,y=value,color=variable))+
+  geom_line(lwd=1) +  
+  ylim(c(0,200))+
+  ggtitle('Lower Bound on True Positive in Yeast Data')
