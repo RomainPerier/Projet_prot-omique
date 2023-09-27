@@ -90,7 +90,7 @@ get_p_values_ss <- function(bdd,alternative = "two.sided"){
   return(cbind(bdd[,(1:2)],Pvalue))
 }
 
-get_p_values_DAPAR <- function(bdd,comp.type){
+get_p_values_DAPAR_mean <- function(bdd,comp.type){
   library(DAPAR)
   vectcond=lapply(colnames(bdd), function(i) strsplit(i,"[_]")[[1]][3])
   vectcond[is.na(vectcond)]<-FALSE
@@ -107,10 +107,12 @@ get_p_values_DAPAR <- function(bdd,comp.type){
                                  High_spike1 = rowMeans(cbind(bdd[,set4][2],bdd[,set5][2],bdd[,set6][2])),
                                  High_spike1 = rowMeans(cbind(bdd[,set4][3],bdd[,set5][3],bdd[,set6][3]))))
   Tab_prot <- data.frame(cbind(Sample.name = c("Low_spike1","Low_spike2","Low_spike3","High_spike1","High_spike2","High_spike3"),Condition = c("Low_spike","Low_spike","Low_spike","High_spike","High_spike","High_spike"),Bio.Rep = 1:6))
-  limmaCompleteTest(prot_matr,Tab_prot,comp.type)
+  limma <- limmaCompleteTest(prot_matr,Tab_prot,comp.type)
+  Pvalue <- limma[[2]][,1]
+  return(cbind(bdd[,1:2],Pvalue))
 }
 
-get_forest <- function(pvalues){
+get_forest_and_sorted_pvalues <- function(pvalues){
   library(stringr)
   Species <- !str_detect(pvalues[,"Leading_razor_protein"],"ups")
   Species[Species==TRUE] <-"yeast"
@@ -139,7 +141,24 @@ get_forest <- function(pvalues){
     C3 <- append(C3,list(c(i,i)))
   }
   C <- list(list(c(1,n_leaf)),list(c(1,n_ups),c(n_ups+1,n_yeast + n_ups)),C3)    
-  return(list(leaf_list,C))
+  return(list(leaf_list,C,res_ordered["Pvalue",]))
+}
+
+get_p_values_DAPAR_nomean <- function(bdd,comp.type){
+  library(DAPAR)
+  vectcond=lapply(colnames(bdd), function(i) strsplit(i,"[_]")[[1]][3])
+  vectcond[is.na(vectcond)]<-FALSE
+  set1 <- vectcond=="0.5fmol"
+  set2 <- vectcond=="1fmol"
+  set3 <- vectcond=="2.5fmol"
+  set4 <- vectcond=="5fmol"
+  set5 <- vectcond=="10fmol"
+  set6 <- vectcond=="25fmol"
+  prot_matr <- data.matrix(cbind(bdd[,set1],bdd[,set2],bdd[,set3],bdd[,set4],bdd[,set5],bdd[,set6]))
+  Tab_prot <- data.frame(cbind(Sample.name = c(rep("0.5fmol",3),rep("1fmol",3),rep("2.5fmol",3),rep("5fmol",3),rep("10fmol",3),rep("25fmol",3)),Condition = c(rep(1,9),rep(2,9)),Bio.Rep = 1:18))
+  limma <- limmaCompleteTest(prot_matr,Tab_prot,comp.type)
+  Pvalue <- limma[[2]][,1]
+  return(cbind(bdd[,1:2],Pvalue))
 }
 
 cdf_p_values <- function(p_values,bdd){
@@ -156,14 +175,60 @@ cdf_p_values <- function(p_values,bdd){
     geom_segment(aes(x = 0, y = 0, xend = 1, yend = 1),show.legend = NA,lwd=1,linetype='dashed',color='black')
 }
 
-
+get_envelop <- function(p_values,alpha,method){
+  C=final_tree[[2]]
+  leaf_list=final_tree[[1]]
+  m=nrow(proteom)
+  TP=cumsum(res_ordered[line_sorted_by_pval,]$Species=='ups')
+  
+  df_bornes <- cbind(df_bornes,TP)
+  
+  alpha=0.05
+  K = 10 
+  ZL_DKWM=zetas.tree(C,leaf_list,zeta.DKWM,pval,alpha) 
+  ZL_HB = zetas.tree(C,leaf_list,zeta.HB,pval,alpha)
+  source("Fonction/zetas.tree.refined.R")
+  ZL_refined=zetas.tree.refined(C,leaf_list,zeta.DKWM,pval,alpha)
+  
+  Vstar_DKWM=rep(0,m%/%K)
+  Vstar_HB=rep(0,m%/%K)
+  Vstar_refined=rep(0,m%/%K)
+  
+  for (i in 1:(m%/%K)){
+    S=line_sorted_by_pval[1:(K*i)]
+    Vstar_DKWM[i]<-V.star(S,C,ZL_DKWM,leaf_list)
+    Vstar_HB[i]<-V.star(S,C,ZL_HB,leaf_list)
+    Vstar_refined[i] <- V.star(S,C,ZL_refined,leaf_list)
+    print(i)
+  }
+  # Vsimes : 
+  thr=alpha/m*(1:m)
+  Vsimes=sanssouci:::curveMaxFP(pval,thr)[1:(m%/%K)*K]
+  
+  df <- cbind(df_bornes[1:(m%/%K)*K,],Vstar_DKWM,Vstar_HB,Vsimes,Vstar_refined)
+  
+  #Plot : 
+  df_plot =  cbind(df[,1:2]
+                   ,TP_Vsimes=df[,'Index']-df[,'Vsimes']
+                   ,TP_Vstar_DKWM=df[,'Index']-df[,'Vstar_DKWM']
+                   ,TP_Vstar_HB=df[,'Index']-df[,'Vstar_HB']
+                   ,TP_Vstar_refined=df[,'Index']-df[,'Vstar_refined'])
+  
+  df_plot = melt(df_plot, id.vars = "Index")
+  
+  save(df_plot,file='save/df_plot.RData')
+}
 
 new_bdd <- preprocessing(bdd,"wild")
-limma <- get_p_values_DAPAR(new_bdd,'OnevsAll')
-p_values <- limma[[2]]
-p_values <- p_values[,1]
+limma <- get_p_values_DAPAR_mean(new_bdd,'OnevsAll')
+p_values <- limma[,3]
+cdf_p_values(p_values,new_bdd)
+
+limma <- get_p_values_DAPAR_nomean(new_bdd,'OnevsAll')
+p_values <- limma[,3]
 cdf_p_values(p_values,new_bdd)
 
 
-p_values <- get_p_values_ss(new_bdd,alternative = "two.sided")$Pvalue
+
+p_values <- get_p_values_ss(new_bdd,alternative = "greater")$Pvalue
 cdf_p_values(p_values,new_bdd)
