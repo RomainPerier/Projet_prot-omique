@@ -1,5 +1,284 @@
 bdd=read.csv("Fichier/peptides_YEASTUPS.txt",header=TRUE,sep="",blank.lines.skip=TRUE)
+library(sanssouci)
 library(ggplot2)
+library(ggthemes)
+library(stringr)
+library(reshape2)
+library(DAPAR)
+
+## Dev sanssouci ---- 
+zeta.HB.no.extension <- function(pval, lambda) {
+  m <- length(pval)
+  sorted.pval <- sort(pval)
+  
+  thresholds <- lambda / (m:1)
+  v <- sorted.pval - thresholds
+  indexes <- which(v > 0)
+  if (! length(indexes)) {
+    return(0)
+  }
+  else{
+    return(m - indexes[1] + 1)
+  }
+}
+forest.completion <- function(C, ZL, leaf_list) {
+  H <- length(C)
+  
+  leaves.to.place <- 1:length(leaf_list)
+  len.to.place <- length(leaves.to.place)
+  to.delete <- numeric(0)
+  
+  for (h in 1:H) {
+    
+    j <- 1
+    l <- 1
+    
+    while (j <= len.to.place) {
+      expected_leaf <- leaves.to.place[j]
+      end_of_line <- l > length(C[[h]])
+      if (! end_of_line) {Chl <- C[[h]][[l]]}
+      if ((! end_of_line) && expected_leaf == Chl[[1]]) {
+        if (expected_leaf == Chl[[2]]) {
+          to.delete <- c(to.delete, j)
+        }
+        j <- j + Chl[2] - Chl[1] +1
+      } else {
+        C[[h]] <- append(C[[h]], list(c(expected_leaf, expected_leaf)), l - 1)
+        ZL[[h]] <- append(ZL[[h]], length(leaf_list[[expected_leaf]]), l - 1)
+        to.delete <- c(to.delete, j)
+        j <- j + 1
+      }
+      l <- l + 1
+    }
+    
+    leaves.to.place <- leaves.to.place[-to.delete]
+    len.to.place <- length(leaves.to.place)
+    to.delete <- numeric(0)
+    
+  }
+  
+  if (len.to.place > 0) {
+    h <- H + 1
+    C[[h]] <- list()
+    ZL[[h]] <- numeric(0)
+    for (expected_leaf in leaves.to.place) {
+      C[[h]] <- append(C[[h]], list(c(expected_leaf, expected_leaf)))
+      ZL[[h]] <- append(ZL[[h]], length(leaf_list[[expected_leaf]]))
+    }
+  }
+  
+  return(list(C = C, ZL = ZL))
+}
+V.star.no.extension <- function(S, C, ZL, leaf_list) {
+  H <- length(C)
+  nb_leaves <- length(leaf_list)
+  Vec <- numeric(nb_leaves) 
+  for (i in 1:nb_leaves) {
+    Vec[i] <- sum(S %in% leaf_list[[i]])
+  }
+  # the initialization term for each atom P_i
+  # is equivalent to completing the family if it isn't,
+  # assuming that leaf_list does indeed contain all leaves
+  # and some were just eventually missing in C and ZL
+  for (h in H:1) {
+    nb_regions <- length(C[[h]])
+    if (nb_regions>0) {
+      for (j in 1:nb_regions) {
+        Chj <- C[[h]][[j]]
+        if (Chj[1]==Chj[2]) { # means this is an atom, no need to compute 
+          # len_inter given that we already did it during initialization,
+          # furthermore there are no successors
+          len_inter <- Vec[Chj[1]]
+          res <- min(ZL[[h]][j], len_inter)
+        } else {
+          region_vector <- unlist(leaf_list[Chj[1]:Chj[2]])
+          len_inter <- sum(S %in% region_vector)
+          sum_succ <- sum(Vec[Chj[1]:Chj[2]]) 
+          res <- min(ZL[[h]][j], len_inter, sum_succ)
+        }
+        Vec[Chj[1]:Chj[2]] <- 0
+        Vec[Chj[1]] <- res
+      }
+    }
+  }
+  return(sum(Vec))
+}
+curve.V.star.forest.fast <- function(perm, C, ZL, leaf_list, is.pruned = FALSE, is.complete = FALSE, pruning = FALSE, delete.gaps = FALSE){
+  
+  vstars <- numeric(length(perm))
+  
+  if (! is.pruned) {
+    if (! is.complete) {
+      # the fast version needs a proper completion of the
+      # forest structure, and for the same reason
+      # it must not use super pruning
+      completed <- forest.completion(C, ZL, leaf_list)
+      C <- completed$C
+      ZL <- completed$ZL
+    }
+    
+    if (pruning) {
+      is.pruned <- TRUE
+      pruned <- pruning(C, ZL, leaf_list, super.prune = FALSE, delete.gaps = delete.gaps)
+      C <- pruned$C
+      ZL <- pruned$ZL
+      m <- length(unlist(leaf_list))
+      
+      if (length(perm) == m) {
+        # means that length(perm) = m,
+        # but the pruning already computed
+        # V^*({1, ..., m}) as a by-product so we
+        # might as well use it:
+        vstars[m] <- pruned$VstarNm
+        perm <- perm[-m]
+      }
+      
+    }
+  }
+  
+  
+  H <- length(C)
+  
+  etas <- ZL
+  K.minus <- list()
+  for (h in 1:H){
+    etas[[h]] <- rep(0, length(ZL[[h]]))
+    K.minus[[h]] <- list()
+    if (length(ZL[[h]]) > 0){
+      for (j in 1:length(ZL[[h]])){
+        if (ZL[[h]][j] == 0){
+          K.minus[[h]][[j]] <- C[[h]][[j]]
+        }
+      }
+    }
+  }
+  
+  for (t in 1:length(perm)) {
+    
+    i.t <- perm[t]
+    if (t > 1) {
+      previous.vstar <- vstars[t - 1]
+    } else {
+      previous.vstar <- 0
+    }
+    
+    ################################
+    # SEARCHING IF i_t IS IN K MINUS
+    # if so, go.next == TRUE
+    # and we just go next to step t+1
+    go.next <- FALSE
+    for (h in 1:H) {
+      if (go.next) {
+        break
+      }
+      for (couple in K.minus[[h]]) {
+        if (! is.null(couple)) {
+          lower_leaf <- leaf_list[[couple[1]]]
+          lower_hyp <- lower_leaf[1]
+          upper_leaf <- leaf_list[[couple[2]]]
+          upper_hyp <- upper_leaf[length(upper_leaf)]
+          if ((i.t >= lower_hyp) && (i.t <= upper_hyp)) {
+            go.next <- TRUE
+            # print(paste0(i.t, " is in K minus"))
+            break
+          }
+        }
+      }
+    }
+    # print(paste0(i.t, " isn't in K minus"))
+    #########################################
+    
+    # COMPUTING V.STAR AND UPDATING K.MINUS AND ETAS
+    ################################################
+    if (go.next) {
+      vstars[t] <- previous.vstar
+    } else {
+      # Here, i_t isn't in K minus
+      for (h in 1:H) {
+        nb_regions <- length(C[[h]])
+        if(nb_regions > 0){
+          is.found <- FALSE
+          for (j in 1:nb_regions) {
+            couple <- C[[h]][[j]]
+            lower_leaf <- leaf_list[[couple[1]]]
+            lower_hyp <- lower_leaf[1]
+            upper_leaf <- leaf_list[[couple[2]]]
+            upper_hyp <- upper_leaf[length(upper_leaf)]
+            if((i.t >= lower_hyp) && (i.t <= upper_hyp)){
+              # we found k^{(t,h)}
+              is.found <- TRUE
+              break
+            }
+          }
+          if (! is.found) {
+            next
+          }
+          etas[[h]][[j]] <- etas[[h]][[j]] + 1
+          if(etas[[h]][[j]] < ZL[[h]][[j]]){
+            # pass
+          } else {
+            K.minus[[h]][[j]] <- C[[h]][[j]]
+            break
+          }
+        }
+      }
+      vstars[t] <- previous.vstar + 1
+    }
+    ################################################
+    
+  }
+  return(vstars)
+}
+zetas.tree.no.extension <- function(C, leaf_list, method, pvalues, alpha, refine=FALSE, verbose=FALSE) {
+  H <- length(C)
+  K <- nb.elements.no.extension(C)
+  ZL <- list()
+  new_K <- K
+  continue <- TRUE
+  nb_loop <- 0
+  while (continue) {
+    usage_K <- new_K
+    new_K <- K
+    for (h in H:1) {
+      Ch <- C[[h]]
+      len <- length(Ch)
+      zeta_inter <- numeric(len)
+      for (j in 1:len) {
+        Chj <- Ch[[j]]
+        pvals <- pvalues[unlist(leaf_list[Chj[1]:Chj[2]])]
+        if (typeof(method) == "list") {
+          if (typeof(method[[h]]) == "list") {
+            zeta_method <- method[[h]][[j]]
+          } else {
+            zeta_method <- method[[h]]
+          }
+        } else {
+          zeta_method <- method
+        }
+        zeta_inter[j] <- zeta_method(pvals, alpha / usage_K)
+        if (refine && (zeta_inter[j] == 0) )
+          new_K <- new_K - 1
+      }
+      ZL[[h]] <- zeta_inter
+    }
+    if (verbose) {
+      nb_loop <- nb_loop + 1
+      print(paste0("loop number=", nb_loop,", usage_K=",usage_K,", new_K=",new_K))
+    }
+    continue <- refine && (new_K < usage_K)
+  }
+  return(ZL)
+}
+nb.elements.no.extension <- function(C) {
+  H <- length(C)
+  count <- 0
+  for (h in H:1) {
+    count <- count + length(C[[h]])
+  }
+  return(count)
+}
+
+## Functions proteomic --------------
 
 preprocessing <- function(bdd,type){
   vectcond=lapply(colnames(bdd), function(i) strsplit(i,"[_]")[[1]][3])
@@ -117,31 +396,35 @@ get_forest_and_sorted_pvalues <- function(pvalues){
   Species <- !str_detect(pvalues[,"Leading_razor_protein"],"ups")
   Species[Species==TRUE] <-"yeast"
   Species[Species==FALSE] <-"ups"
-  n_yeast <- sum(Species == "yeast")    
-  n_ups <- sum(Species == "ups")    
   pvalues <- cbind(pvalues,Species)
   res_ordered <- pvalues[order(pvalues[,colnames(pvalues)=="Species"]),]
-  ord <- c(order(res_ordered[res_ordered$Species=="ups","Leading_razor_protein"]), n_ups + order(res_ordered[res_ordered$Species=="yeast","Leading_razor_protein"]))
+  n_peptid_ups <- sum(Species == "ups") 
+  ord <- c(order(res_ordered[res_ordered$Species=="ups","Leading_razor_protein"]), n_peptid_ups + order(res_ordered[res_ordered$Species=="yeast","Leading_razor_protein"]))
   res_ordered <- res_ordered[ord,]
+  ordered_species <- res_ordered$Species
   m <- nrow(res_ordered)
   i <- 1
   leaf_list <- list()
+  n_ups <- 0
+  n_leaves <- 0
   while (i<length(Species)){
     j <- i
-    print(i)
     while(res_ordered[j,"Leading_razor_protein"] == res_ordered[j+1,"Leading_razor_protein"] && j < length(Species)){
       j <- j+1
     }
-    leaf_list <- append(leaf_list,list(c(i,j)))
+    leaf_list <- append(leaf_list,list(i:j))
     i<-j+1
+    n_leaves <- n_leaves + 1
+    if (ordered_species[j]=="ups"){
+      n_ups <- n_ups + 1
+    }
   }
-  n_leaf <- n_yeast + n_ups
   C3=list()   
-  for (i in 1:n_leaf){
+  for (i in 1:n_leaves){
     C3 <- append(C3,list(c(i,i)))
   }
-  C <- list(list(c(1,n_leaf)),list(c(1,n_ups),c(n_ups+1,n_yeast + n_ups)),C3)    
-  return(list(leaf_list,C,res_ordered["Pvalue",]))
+  C <- list(list(c(1,n_leaves)),list(c(1,n_ups),c(n_ups+1,n_leaves)),C3)    
+  return(list(leaf_list,C,res_ordered))
 }
 
 get_p_values_DAPAR_nomean <- function(bdd,comp.type){
@@ -162,11 +445,11 @@ get_p_values_DAPAR_nomean <- function(bdd,comp.type){
 }
 
 cdf_p_values <- function(p_values,bdd){
-  m=nrow(res_ordered)
+  m=nrow(p_values)
   Species <- !str_detect(new_bdd[,"Leading_razor_protein"],"ups")
   Species[Species==TRUE] <- "H0"
   Species[Species==FALSE] <- "H1"
-  df=data.frame(Pvalue=p_values,Condition=Species)
+  df=data.frame(Pvalue =p_values$Pvalue,Condition=Species)
   df <- df[line_sorted_by_pval,]
   ggplot(df,aes(x=Pvalue,color=Condition))+
     stat_ecdf(geom='step',lwd=1)+
@@ -175,51 +458,57 @@ cdf_p_values <- function(p_values,bdd){
     geom_segment(aes(x = 0, y = 0, xend = 1, yend = 1),show.legend = NA,lwd=1,linetype='dashed',color='black')
 }
 
-get_envelop <- function(p_values,alpha,method){
-  C=final_tree[[2]]
-  leaf_list=final_tree[[1]]
-  m=nrow(proteom)
-  TP=cumsum(res_ordered[line_sorted_by_pval,]$Species=='ups')
+get_envelop <- function(p_values,alpha){
+  L <- get_forest_and_sorted_pvalues(p_values)
+  sorted_p_values <- L[[3]]
+  pval <- sorted_p_values[,3]
+  leaf_list <- L[[1]]
+  forest <- L[[2]]
+  line_sorted_by_pval <- order(pval)
+  m <- length(line_sorted_by_pval)
+
+
+  ZL_DKWM <- zetas.tree.no.extension(forest,leaf_list,zeta.DKWM,pval,alpha/2) 
+  ZL_HB <- zetas.tree.no.extension(forest,leaf_list,zeta.HB.no.extension,pval,alpha/2)
+  ZL_DKWM_bis <- zetas.tree.no.extension(forest,leaf_list,zeta.DKWM,1-pval,alpha/2) 
+  ZL_HB_bis <- zetas.tree.no.extension(forest,leaf_list,zeta.HB.no.extension,1-pval,alpha/2)
+  Vstar_DKWM <- curve.V.star.forest.fast(line_sorted_by_pval,forest,ZL_DKWM,leaf_list)
+  print("DKWM done")
+  Vstar_HB <- curve.V.star.forest.fast(line_sorted_by_pval,forest,ZL_HB,leaf_list)
+  print("HB done")
+  Vstar_DKWM_bis <- curve.V.star.forest.fast(line_sorted_by_pval,forest,ZL_DKWM_bis,leaf_list)
+  print("DKWM_bis done")
+  Vstar_HB_bis <- curve.V.star.forest.fast(line_sorted_by_pval,forest,ZL_HB_bis,leaf_list)
+  print("HB_bis done")
   
+  thr <- alpha/(m*2)*(1:m)
+  Vsimes <- sanssouci:::curveMaxFP(pval,thr)
+  Vsimes_bis <- sanssouci:::curveMaxFP(1-pval,thr)
+  print("Simes done")
+  
+  TP <- cumsum(sorted_p_values[line_sorted_by_pval,"Species"]=='ups')
+  df_bornes <- data.frame(Index=1:m)
   df_bornes <- cbind(df_bornes,TP)
-  
-  alpha=0.05
-  K = 10 
-  ZL_DKWM=zetas.tree(C,leaf_list,zeta.DKWM,pval,alpha) 
-  ZL_HB = zetas.tree(C,leaf_list,zeta.HB,pval,alpha)
-  source("Fonction/zetas.tree.refined.R")
-  ZL_refined=zetas.tree.refined(C,leaf_list,zeta.DKWM,pval,alpha)
-  
-  Vstar_DKWM=rep(0,m%/%K)
-  Vstar_HB=rep(0,m%/%K)
-  Vstar_refined=rep(0,m%/%K)
-  
-  for (i in 1:(m%/%K)){
-    S=line_sorted_by_pval[1:(K*i)]
-    Vstar_DKWM[i]<-V.star(S,C,ZL_DKWM,leaf_list)
-    Vstar_HB[i]<-V.star(S,C,ZL_HB,leaf_list)
-    Vstar_refined[i] <- V.star(S,C,ZL_refined,leaf_list)
-    print(i)
-  }
-  # Vsimes : 
-  thr=alpha/m*(1:m)
-  Vsimes=sanssouci:::curveMaxFP(pval,thr)[1:(m%/%K)*K]
-  
-  df <- cbind(df_bornes[1:(m%/%K)*K,],Vstar_DKWM,Vstar_HB,Vsimes,Vstar_refined)
-  
-  #Plot : 
+  df <- cbind(df_bornes,Vstar_DKWM,Vstar_DKWM_bis,Vstar_HB,Vstar_HB_bis,Vsimes,Vsimes_bis)
   df_plot =  cbind(df[,1:2]
                    ,TP_Vsimes=df[,'Index']-df[,'Vsimes']
                    ,TP_Vstar_DKWM=df[,'Index']-df[,'Vstar_DKWM']
-                   ,TP_Vstar_HB=df[,'Index']-df[,'Vstar_HB']
-                   ,TP_Vstar_refined=df[,'Index']-df[,'Vstar_refined'])
+                   ,TP_Vstar_HB=df[,'Index']-df[,'Vstar_HB']                   
+                   ,TP_Vsimes_sup=df[,'Vsimes_bis']
+                   ,TP_Vstar_DKWM_sup=df[,'Vstar_DKWM_bis']
+                   ,TP_Vstar_HB_sup=df[,'Vstar_HB_bis'])
   
   df_plot = melt(df_plot, id.vars = "Index")
+  ggplot(df_plot,aes(x=Index,y=value,color=variable))+
+    geom_line(lwd=1) +  
+    ylim(c(0,5500))+
+    ggtitle('Lower Bound on True Positive in Yeast Data')
   
-  save(df_plot,file='save/df_plot.RData')
 }
 
-new_bdd <- preprocessing(bdd,"wild")
+##Appli -----------------
+
+new_bdd <- preprocessing(bdd,"nwild")
 limma <- get_p_values_DAPAR_mean(new_bdd,'OnevsAll')
 p_values <- limma[,3]
 cdf_p_values(p_values,new_bdd)
@@ -230,5 +519,6 @@ cdf_p_values(p_values,new_bdd)
 
 
 
-p_values <- get_p_values_ss(new_bdd,alternative = "greater")$Pvalue
-cdf_p_values(p_values,new_bdd)
+p_values <- get_p_values_ss(new_bdd,alternative = "greater")
+L <- get_forest_and_sorted_pvalues(p_values)
+get_envelop(p_values,0.05)
