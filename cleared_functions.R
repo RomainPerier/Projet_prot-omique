@@ -444,12 +444,14 @@ get_p_values_DAPAR_nomean <- function(bdd,comp.type){
   return(cbind(bdd[,1:2],Pvalue))
 }
 
-cdf_p_values <- function(p_values,bdd){
+cdf_p_values <- function(pvalues,bdd){
+  p_values <- pvalues[,3]
   m=nrow(p_values)
   Species <- !str_detect(new_bdd[,"Leading_razor_protein"],"ups")
   Species[Species==TRUE] <- "H0"
   Species[Species==FALSE] <- "H1"
-  df=data.frame(Pvalue =p_values$Pvalue,Condition=Species)
+  df=data.frame(Pvalue =p_values,Condition=Species)
+  line_sorted_by_pval <- order(p_values)
   df <- df[line_sorted_by_pval,]
   ggplot(df,aes(x=Pvalue,color=Condition))+
     stat_ecdf(geom='step',lwd=1)+
@@ -506,19 +508,58 @@ get_envelop <- function(p_values,alpha){
   
 }
 
+get_bounds <- function(p_values,alpha,methods){
+  library(sanssouci)
+  L <- get_forest_and_sorted_pvalues(p_values)
+  sorted_p_values <- L[[3]]
+  pval <- sorted_p_values[,3]
+  leaf_list <- L[[1]]
+  forest <- L[[2]]
+  line_sorted_by_pval <- order(pval)
+  m <- length(line_sorted_by_pval)
+  L <- list()
+  TP <- cumsum(sorted_p_values[line_sorted_by_pval,"Species"]=='ups')
+  df <- data.frame(Index=1:m)
+  df <- cbind(df,TP)
+  for (method in methods){
+    print(method)
+    if (method == "simes"){
+      thr <- alpha/m*(1:m)
+      Vsimes <- sanssouci:::curveMaxFP(pval,thr)
+      df <- cbind(df,TP_simes=df[,'Index']-Vsimes)
+    }
+    else {
+      fun <- get(method)
+      ZL <- zetas.tree.no.extension(forest,leaf_list,fun,pval,alpha) 
+      Vstar <- curve.V.star.forest.fast(line_sorted_by_pval,forest,ZL,leaf_list)
+      df <- cbind(df,Vstar)
+      colnames(df)[length(df)]<- paste("TP_", strsplit(method,"[.]"))
+    }
+  }
+  print("ok")
+  df_plot <- melt(df_plot, id.vars = "Index")
+  ggplot(df_plot,aes(x=Index,y=value,color=variable))+
+    geom_line(lwd=1) +  
+    ylim(c(0,250))+
+    ggtitle('Lower Bound on True Positive')
+  df_plot
+}
+
 ##Appli -----------------
 
 new_bdd <- preprocessing(bdd,"nwild")
-limma <- get_p_values_DAPAR_mean(new_bdd,'OnevsAll')
-p_values <- limma[,3]
+p_values <- get_p_values_DAPAR_mean(new_bdd,'OnevsAll')
 cdf_p_values(p_values,new_bdd)
 
-limma <- get_p_values_DAPAR_nomean(new_bdd,'OnevsAll')
-p_values <- limma[,3]
+p_values <- get_p_values_DAPAR_nomean(new_bdd,'OnevsAll')
 cdf_p_values(p_values,new_bdd)
 
 
 
 p_values <- get_p_values_ss(new_bdd,alternative = "greater")
-L <- get_forest_and_sorted_pvalues(p_values)
-get_envelop(p_values,0.05)
+cdf_p_values(p_values,new_bdd)
+
+bounds <- get_bounds(p_values,0.05,list("simes","zeta.DKWM"))
+
+
+rm(list = ls())
