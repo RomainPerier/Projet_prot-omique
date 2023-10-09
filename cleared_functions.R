@@ -5,6 +5,7 @@ library(ggthemes)
 library(stringr)
 library(reshape2)
 library(DAPAR)
+library(cherry)
 
 ## Dev sanssouci ---- 
 zeta.HB.no.extension <- function(pval, lambda) {
@@ -370,7 +371,6 @@ get_p_values_ss <- function(bdd,alternative = "two.sided"){
 }
 
 get_p_values_DAPAR_mean <- function(bdd,comp.type){
-  library(DAPAR)
   vectcond=lapply(colnames(bdd), function(i) strsplit(i,"[_]")[[1]][3])
   vectcond[is.na(vectcond)]<-FALSE
   set1 <- vectcond=="0.5fmol"
@@ -428,7 +428,6 @@ get_forest_and_sorted_pvalues <- function(pvalues){
 }
 
 get_p_values_DAPAR_nomean <- function(bdd,comp.type){
-  library(DAPAR)
   vectcond=lapply(colnames(bdd), function(i) strsplit(i,"[_]")[[1]][3])
   vectcond[is.na(vectcond)]<-FALSE
   set1 <- vectcond=="0.5fmol"
@@ -509,7 +508,6 @@ get_envelop <- function(p_values,alpha){
 }
 
 get_bounds <- function(p_values,alpha,methods){
-  library(sanssouci)
   L <- get_forest_and_sorted_pvalues(p_values)
   sorted_p_values <- L[[3]]
   pval <- sorted_p_values[,3]
@@ -517,10 +515,9 @@ get_bounds <- function(p_values,alpha,methods){
   forest <- L[[2]]
   line_sorted_by_pval <- order(pval)
   m <- length(line_sorted_by_pval)
-  L <- list()
-  TP <- cumsum(sorted_p_values[line_sorted_by_pval,"Species"]=='ups')
+  Oracle <-cumsum(sorted_p_values[line_sorted_by_pval,"Species"]=='ups')
   df <- data.frame(Index=1:m)
-  df <- cbind(df,TP)
+  df <- cbind.data.frame(df,Oracle)
   for (method in methods){
     print(method)
     if (method == "simes"){
@@ -528,38 +525,44 @@ get_bounds <- function(p_values,alpha,methods){
       Vsimes <- sanssouci:::curveMaxFP(pval,thr)
       df <- cbind(df,TP_simes=df[,'Index']-Vsimes)
     }
+    else if (method == "cherry"){
+      hom <- hommelFast(pval,simes=TRUE)
+      TP_cherry <- sapply(1:m, FUN=function(i) pickSimes(hom, select= 1:i))
+      df <- cbind(df,TP_cherry)
+    }
     else {
       fun <- get(method)
       ZL <- zetas.tree.no.extension(forest,leaf_list,fun,pval,alpha) 
       Vstar <- curve.V.star.forest.fast(line_sorted_by_pval,forest,ZL,leaf_list)
-      df <- cbind(df,Vstar)
-      colnames(df)[length(df)]<- paste("TP_", strsplit(method,"[.]"))
+      df <- cbind(df,df[,'Index'] - Vstar)
+      colnames(df)[length(df)]<- paste0("TP_",strsplit(method,"[.]")[[1]][2])
     }
   }
   print("ok")
-  df_plot <- melt(df_plot, id.vars = "Index")
+  return(df)
+}
+
+plot_bounds<- function(df_bounds){
+  df_plot = melt(df_bounds, id.vars = "Index")
   ggplot(df_plot,aes(x=Index,y=value,color=variable))+
     geom_line(lwd=1) +  
-    ylim(c(0,250))+
-    ggtitle('Lower Bound on True Positive')
-  df_plot
+    ylim(c(0,200))+
+    ggtitle('Lower Bound on True Positive')+
+    xlim(c(0,500))+
+    ylab("Lower confidence envelope on the number of true positives") + 
+    xlab("Hypotheses sorted by p-value")
 }
 
 ##Appli -----------------
 
 new_bdd <- preprocessing(bdd,"nwild")
-p_values <- get_p_values_DAPAR_mean(new_bdd,'OnevsAll')
-cdf_p_values(p_values,new_bdd)
-
-p_values <- get_p_values_DAPAR_nomean(new_bdd,'OnevsAll')
-cdf_p_values(p_values,new_bdd)
-
-
 
 p_values <- get_p_values_ss(new_bdd,alternative = "greater")
 cdf_p_values(p_values,new_bdd)
 
-bounds <- get_bounds(p_values,0.05,list("simes","zeta.DKWM"))
+bounds <- get_bounds(p_values,0.05,list("cherry","simes","zeta.DKWM"))
+plot_bounds(bounds)
 
 
-rm(list = ls())
+
+#rm(list = ls())
