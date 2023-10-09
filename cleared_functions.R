@@ -542,15 +542,16 @@ get_bounds <- function(p_values,alpha,methods){
   return(df)
 }
 
-plot_bounds<- function(df_bounds){
+plot_bounds<- function(df_bounds,xbound,ybound){
   df_plot = melt(df_bounds, id.vars = "Index")
   ggplot(df_plot,aes(x=Index,y=value,color=variable))+
     geom_line(lwd=1) +  
-    ylim(c(0,200))+
+    ylim(c(0,ybound))+
     ggtitle('Lower Bound on True Positive')+
-    xlim(c(0,500))+
     ylab("Lower confidence envelope on the number of true positives") + 
-    xlab("Hypotheses sorted by p-value")
+    xlab("Hypotheses sorted by p-value") + 
+    xlim(c(0,xbound))+
+    labs(color = "Method")
 }
 
 ##Appli -----------------
@@ -561,7 +562,8 @@ p_values <- get_p_values_ss(new_bdd,alternative = "greater")
 cdf_p_values(p_values,new_bdd)
 
 bounds <- get_bounds(p_values,0.05,list("cherry","simes","zeta.DKWM"))
-plot_bounds(bounds)
+plot_bounds(bounds,500,200)
+plot_bounds(bounds,length(bounds[,1]),200)
 
 
 
