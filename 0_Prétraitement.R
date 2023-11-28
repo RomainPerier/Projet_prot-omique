@@ -138,4 +138,4 @@ row.names(proteom) <- 1:nrow(proteom)
 save(proteom,file='save/proteom.RData')
 
 
-##ça push ou pas?----------
+##ça push ou pas?--------
